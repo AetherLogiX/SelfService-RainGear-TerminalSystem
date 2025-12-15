@@ -141,22 +141,60 @@ QWidget* MainWindow::createUserInputPage()
     form->setFormAlignment(Qt::AlignHCenter);
     form->setVerticalSpacing(16);
     
-    m_inputUser = new QLineEdit(page);
-    m_inputName = new QLineEdit(page);
-    m_inputUser->setPlaceholderText(tr("请输入学号/工号"));
-    m_inputName->setPlaceholderText(tr("请输入姓名"));
-    m_inputUser->setFixedWidth(300);
-    m_inputName->setFixedWidth(300);
+    // 使用局部变量，避免与Login页面的输入框冲突
+    auto *inputUser = new QLineEdit(page);
+    auto *inputName = new QLineEdit(page);
+    inputUser->setPlaceholderText(tr("请输入学号/工号"));
+    inputName->setPlaceholderText(tr("请输入姓名"));
+    inputUser->setFixedWidth(300);
+    inputName->setFixedWidth(300);
     
-    form->addRow(tr("学号/工号："), m_inputUser);
-    form->addRow(tr("姓名："), m_inputName);
+    form->addRow(tr("学号/工号："), inputUser);
+    form->addRow(tr("姓名："), inputName);
 
     auto *btnSubmit = new QPushButton(tr("提交"), page);
     btnSubmit->setFixedWidth(160);
     btnSubmit->setStyleSheet("font-size:16px; padding:10px;");
-    connect(btnSubmit, &QPushButton::clicked, this, [this] {
-        if (performUserInput()) {
-            // performUserInput会根据is_active判断跳转到哪个页面
+    connect(btnSubmit, &QPushButton::clicked, this, [this, inputUser, inputName] {
+        // 直接从输入框获取值，避免指针混乱
+        const QString userId = inputUser->text().trimmed();
+        const QString realName = inputName->text().trimmed();
+
+        if (userId.isEmpty() || realName.isEmpty()) {
+            QMessageBox::warning(this, tr("提示"), tr("请输入学号/工号和姓名"));
+            return;
+        }
+
+        if (!DatabaseManager::init()) {
+            QMessageBox::critical(this, tr("数据库错误"), tr("无法连接到本地 MySQL，请检查服务是否已启动。"));
+            return;
+        }
+
+        qDebug() << "[UserInput] 查询用户:" << userId << realName;
+
+        // 查询用户是否存在
+        auto record = DatabaseManager::fetchUserByIdAndName(userId, realName);
+        if (!record) {
+            QMessageBox::warning(this, tr("用户不存在"), tr("未找到该学号/工号和姓名对应的用户，请检查输入。"));
+            return;
+        }
+
+        qDebug() << "[UserInput] 找到用户, is_active:" << record->isActive;
+
+        // 保存临时用户信息
+        m_tempUserId = userId;
+        m_tempUserName = realName;
+        m_currentRole = (record->role == 1) ? Role::Staff : Role::Student;
+
+        // 根据is_active判断是否首次登录
+        if (!record->isActive) {
+            // 首次登录，跳转到设置密码页面
+            qDebug() << "[UserInput] 首次登录，跳转到设置密码页面";
+            switchPage(Page::FirstLogin);
+        } else {
+            // 非首次登录，跳转到密码登录页面
+            qDebug() << "[UserInput] 非首次登录，跳转到密码登录页面";
+            switchPage(Page::Login);
         }
     });
 
@@ -691,40 +729,10 @@ void MainWindow::updateProfileFromUser()
 
 bool MainWindow::performUserInput()
 {
-    const QString userId = m_inputUser ? m_inputUser->text().trimmed() : QString();
-    const QString realName = m_inputName ? m_inputName->text().trimmed() : QString();
-
-    if (userId.isEmpty() || realName.isEmpty()) {
-        QMessageBox::warning(this, tr("提示"), tr("请输入学号/工号和姓名"));
-        return false;
-    }
-
-    if (!DatabaseManager::init()) {
-        QMessageBox::critical(this, tr("数据库错误"), tr("无法连接到本地 MySQL，请检查服务是否已启动。"));
-        return false;
-    }
-
-    // 查询用户是否存在
-    auto record = DatabaseManager::fetchUserByIdAndName(userId, realName);
-    if (!record) {
-        QMessageBox::warning(this, tr("用户不存在"), tr("未找到该学号/工号和姓名对应的用户，请检查输入。"));
-        return false;
-    }
-
-    // 保存临时用户信息
-    m_tempUserId = userId;
-    m_tempUserName = realName;
-    m_currentRole = (record->role == 1) ? Role::Staff : Role::Student;
-
-    // 根据is_active判断是否首次登录
-    if (!record->isActive) {
-        // 首次登录，跳转到设置密码页面
-        switchPage(Page::FirstLogin);
-    } else {
-        // 非首次登录，跳转到密码登录页面
-        switchPage(Page::Login);
-    }
-    return true;
+    // 这个函数现在不再使用，逻辑已移到createUserInputPage的lambda中
+    // 保留此函数以防其他地方调用
+    QMessageBox::warning(this, tr("错误"), tr("此函数已废弃，请使用页面内的提交逻辑"));
+    return false;
 }
 
 bool MainWindow::performFirstLogin()
