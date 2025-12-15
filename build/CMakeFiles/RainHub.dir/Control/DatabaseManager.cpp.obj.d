@@ -282,6 +282,18 @@ CMakeFiles/RainHub.dir/Control/DatabaseManager.cpp.obj: \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qstring.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qstringconverter.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qstringconverter_base.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/QVector \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qvector.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qlist.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qhashfunctions.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/numeric \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/stl_numeric.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/pstl/glue_numeric_defs.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qiterator.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qbytearraylist.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qstringlist.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qalgorithms.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qstringmatcher.h \
  C:\Users\hdcqW\Desktop\Rainhub\Control\DBHelper.h \
  E:/Qt/6.9.3/mingw_64/include/QtSql/QSqlDatabase \
  E:/Qt/6.9.3/mingw_64/include/QtSql/qsqldatabase.h \
@@ -298,12 +310,7 @@ CMakeFiles/RainHub.dir/Control/DatabaseManager.cpp.obj: \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qscopedpointer.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qiodevicebase.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qfloat16.h \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qhashfunctions.h \
- C:/msys64/ucrt64/include/c++/15.2.0/numeric \
- C:/msys64/ucrt64/include/c++/15.2.0/bits/stl_numeric.h \
- C:/msys64/ucrt64/include/c++/15.2.0/pstl/glue_numeric_defs.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qmath.h \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qalgorithms.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qtformat_impl.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qiterable.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qmetacontainer.h \
@@ -333,11 +340,6 @@ CMakeFiles/RainHub.dir/Control/DatabaseManager.cpp.obj: \
  C:/msys64/ucrt64/include/c++/15.2.0/bits/stl_multiset.h \
  C:/msys64/ucrt64/include/c++/15.2.0/unordered_set \
  C:/msys64/ucrt64/include/c++/15.2.0/bits/unordered_set.h \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qlist.h \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qiterator.h \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qbytearraylist.h \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qstringlist.h \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qstringmatcher.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qmap.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qshareddata_impl.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qset.h \
@@ -367,4 +369,8 @@ CMakeFiles/RainHub.dir/Control/DatabaseManager.cpp.obj: \
  E:/Qt/6.9.3/mingw_64/include/QtSql/qsqlquery.h \
  E:/Qt/6.9.3/mingw_64/include/QtSql/qsqldatabase.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/QVariant \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qvariant.h
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qvariant.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/QDateTime \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qdatetime.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qcalendar.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qlocale.h

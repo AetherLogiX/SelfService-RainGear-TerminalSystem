@@ -1,12 +1,16 @@
 #include "MainWindow.h"
 #include "SlotItem.h"
+#include "Model/RainGearFactory.h"
+#include "Model/RainGear_subclasses.hpp"
 
 #include <QApplication>
+#include <QComboBox>
 #include <QFormLayout>
 #include <QGridLayout>
 #include <QHBoxLayout>
 #include <QLabel>
 #include <QLineEdit>
+#include <QMap>
 #include <QMessageBox>
 #include <QPixmap>
 #include <QPushButton>
@@ -141,24 +145,30 @@ QWidget* MainWindow::createUserInputPage()
     form->setFormAlignment(Qt::AlignHCenter);
     form->setVerticalSpacing(16);
     
-    // 使用局部变量，避免与Login页面的输入框冲突
-    auto *inputUser = new QLineEdit(page);
-    auto *inputName = new QLineEdit(page);
-    inputUser->setPlaceholderText(tr("请输入学号/工号"));
-    inputName->setPlaceholderText(tr("请输入姓名"));
-    inputUser->setFixedWidth(300);
-    inputName->setFixedWidth(300);
+    // 使用成员变量保存输入框指针，以便退出登录时清空
+    if (!m_inputUser) {
+        m_inputUser = new QLineEdit(page);
+    }
+    if (!m_inputName) {
+        m_inputName = new QLineEdit(page);
+    }
+    m_inputUser->setPlaceholderText(tr("请输入学号/工号"));
+    m_inputName->setPlaceholderText(tr("请输入姓名"));
+    m_inputUser->setFixedWidth(300);
+    m_inputName->setFixedWidth(300);
+    m_inputUser->clear(); // 每次显示页面时清空
+    m_inputName->clear(); // 每次显示页面时清空
     
-    form->addRow(tr("学号/工号："), inputUser);
-    form->addRow(tr("姓名："), inputName);
+    form->addRow(tr("学号/工号："), m_inputUser);
+    form->addRow(tr("姓名："), m_inputName);
 
     auto *btnSubmit = new QPushButton(tr("提交"), page);
     btnSubmit->setFixedWidth(160);
     btnSubmit->setStyleSheet("font-size:16px; padding:10px;");
-    connect(btnSubmit, &QPushButton::clicked, this, [this, inputUser, inputName] {
-        // 直接从输入框获取值，避免指针混乱
-        const QString userId = inputUser->text().trimmed();
-        const QString realName = inputName->text().trimmed();
+    connect(btnSubmit, &QPushButton::clicked, this, [this] {
+        // 直接从输入框获取值
+        const QString userId = m_inputUser->text().trimmed();
+        const QString realName = m_inputName->text().trimmed();
 
         if (userId.isEmpty() || realName.isEmpty()) {
             QMessageBox::warning(this, tr("提示"), tr("请输入学号/工号和姓名"));
@@ -310,15 +320,15 @@ QWidget* MainWindow::createLoginPage()
     auto *userInfoLabel = new QLabel(page);
     userInfoLabel->setStyleSheet("font-size:16px; color:#34495e;");
     userInfoLabel->setAlignment(Qt::AlignCenter);
-    // 使用lambda更新显示的用户信息
-    auto updateUserInfo = [userInfoLabel, this]() {
-        QString infoText = tr("学号/工号：%1\n姓名：%2")
-            .arg(m_tempUserId.isEmpty() ? tr("未知") : m_tempUserId)
-            .arg(m_tempUserName.isEmpty() ? tr("未知") : m_tempUserName);
-        userInfoLabel->setText(infoText);
-    };
-    updateUserInfo();
+    // 直接显示前面输入的学号和姓名（在switchPage时更新）
+    QString infoText = tr("学号/工号：%1\n姓名：%2")
+        .arg(m_tempUserId.isEmpty() ? tr("未知") : m_tempUserId)
+        .arg(m_tempUserName.isEmpty() ? tr("未知") : m_tempUserName);
+    userInfoLabel->setText(infoText);
     infoLayout->addWidget(userInfoLabel);
+    
+    // 保存标签指针，以便在switchPage时更新
+    m_loginUserInfoLabel = userInfoLabel;
 
     auto *form = new QFormLayout();
     form->setLabelAlignment(Qt::AlignRight);
@@ -448,20 +458,25 @@ QWidget* MainWindow::createResetPwdPage()
             return;
         }
 
-        if (!m_currentUser) {
-            QMessageBox::warning(this, tr("错误"), tr("请先登录"));
-            switchPage(Page::Login);
+        // 修改密码时采用当前待登录的账号（来自学号/姓名输入页面）
+        const QString userId = m_tempUserId;
+        if (userId.isEmpty()) {
+            QMessageBox::warning(this, tr("错误"), tr("用户信息丢失，请返回上一页重新输入学号和姓名。"));
+            switchPage(Page::UserInput);
             return;
         }
 
-        const QString userId = m_currentUser->get_id();
         if (!DatabaseManager::changeUserPassword(userId, oldPassword, newPassword)) {
             QMessageBox::warning(this, tr("修改失败"), tr("旧密码错误或修改失败，请重试。"));
             return;
         }
 
-        QMessageBox::information(this, tr("修改成功"), tr("密码已成功修改！"));
-        switchPage(Page::Dashboard);
+        // 修改成功后要求用户使用新密码重新登录
+        if (m_inputPass) {
+            m_inputPass->clear();
+        }
+        QMessageBox::information(this, tr("修改成功"), tr("密码已成功修改，请使用新密码重新登录。"));
+        switchPage(Page::Login);
     });
 
     auto *btnBack = new QPushButton(tr("返回"), page);
@@ -494,12 +509,58 @@ QWidget* MainWindow::createDashboardPage()
     auto *btnLogout = new QPushButton(tr("退出登录"), page);
     btnLogout->setFixedWidth(100);
     btnLogout->setStyleSheet("font-size:14px; padding:6px 12px;");
+    
+    // 站点选择区域
+    auto *stationLayout = new QHBoxLayout();
+    stationLayout->setAlignment(Qt::AlignHCenter);
+    stationLayout->setSpacing(10);
+    
+    auto *stationLabel = new QLabel(tr("请选择您所在的站点："), page);
+    stationLabel->setStyleSheet("font-size:14px;");
+    
+    m_stationComboBox = new QComboBox(page);
+    m_stationComboBox->setFixedWidth(200);
+    m_stationComboBox->setStyleSheet("font-size:14px; padding:4px;");
+    loadStations(); // 加载站点列表
+    
+    connect(m_stationComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
+            this, &MainWindow::onStationChanged);
+    
+    stationLayout->addWidget(stationLabel);
+    stationLayout->addWidget(m_stationComboBox);
+    stationLayout->addStretch();
     connect(btnLogout, &QPushButton::clicked, this, [this] {
         // 清除用户信息
         m_currentUser.reset();
         m_tempUserId.clear();
         m_tempUserName.clear();
         m_currentRole = Role::Unknown;
+        m_currentStationId = 0;
+        
+        // 清空登录页面的输入框
+        if (m_inputPass) {
+            m_inputPass->clear();
+        }
+        if (m_inputNewPass) {
+            m_inputNewPass->clear();
+        }
+        if (m_inputConfirmPass) {
+            m_inputConfirmPass->clear();
+        }
+        
+        // 清空站点选择
+        if (m_stationComboBox) {
+            m_stationComboBox->setCurrentIndex(0);
+        }
+        
+        // 清空用户输入页面的输入框
+        if (m_inputUser) {
+            m_inputUser->clear();
+        }
+        if (m_inputName) {
+            m_inputName->clear();
+        }
+        
         // 返回欢迎页面
         switchPage(Page::Welcome);
     });
@@ -507,6 +568,13 @@ QWidget* MainWindow::createDashboardPage()
     topBar->addWidget(title);
     topBar->addStretch();
     topBar->addWidget(btnLogout);
+    
+    // 站点选择区域（独立一行）
+    auto *stationRow = new QHBoxLayout();
+    stationRow->setContentsMargins(0, 10, 0, 10);
+    stationRow->addStretch();
+    stationRow->addLayout(stationLayout);
+    stationRow->addStretch();
     
     // 主内容区域
     auto *layout = new QVBoxLayout();
@@ -521,13 +589,19 @@ QWidget* MainWindow::createDashboardPage()
     btnReturn->setStyleSheet("font-size:18px;");
 
     connect(btnBorrow, &QPushButton::clicked, this, [this] {
+        if (m_currentStationId == 0) {
+            QMessageBox::warning(this, tr("提示"), tr("请先选择站点"));
+            return;
+        }
         m_borrowMode = true;
-        populateSlots(true);
         switchPage(Page::Borrow);
     });
     connect(btnReturn, &QPushButton::clicked, this, [this] {
+        if (m_currentStationId == 0) {
+            QMessageBox::warning(this, tr("提示"), tr("请先选择站点"));
+            return;
+        }
         m_borrowMode = false;
-        populateSlots(false);
         switchPage(Page::Borrow);
     });
 
@@ -562,6 +636,7 @@ QWidget* MainWindow::createDashboardPage()
     
     // 组装页面布局
     outerLayout->addLayout(topBar);
+    outerLayout->addLayout(stationRow);
     outerLayout->addStretch();
     outerLayout->addLayout(layout);
     outerLayout->addStretch();
@@ -596,18 +671,30 @@ QWidget* MainWindow::createBorrowPage()
     // Create 12 slot widgets (3x4)
     for (int i = 0; i < 12; ++i) {
         auto *slot = new SlotItem(i, page);
-        connect(slot, &SlotItem::clicked, this, [this](int index, SlotItem::State state) {
-            // Simple selection toggle
-            for (auto *s : m_slots) {
-                if (s->state() == SlotItem::State::Selected && s != m_slots[index]) {
-                    s->setState(m_borrowMode ? SlotItem::State::Available : SlotItem::State::Empty);
-                }
+        // 初始状态设为Empty（灰色），等待从数据库加载
+        slot->setState(SlotItem::State::Empty);
+        slot->setIcon(QPixmap(), QStringLiteral("#%1").arg(i + 1));
+        
+        connect(slot, &SlotItem::clicked, this, [this, i](int index, SlotItem::State state) {
+            if (m_currentStationId == 0) {
+                QMessageBox::warning(this, tr("错误"), tr("请先选择站点"));
+                return;
             }
-            auto target = m_slots[index];
-            if (state == SlotItem::State::Selected) {
-                target->setState(m_borrowMode ? SlotItem::State::Available : SlotItem::State::Empty);
+            
+            if (!m_currentUser) {
+                QMessageBox::warning(this, tr("错误"), tr("请先登录"));
+                switchPage(Page::Dashboard);
+                return;
+            }
+            
+            int slotId = index + 1; // 槽位ID从1开始
+            
+            if (m_borrowMode) {
+                // 借伞模式
+                handleBorrowGear(slotId, index);
             } else {
-                target->setState(SlotItem::State::Selected);
+                // 还伞模式
+                handleReturnGear(slotId, index);
             }
         });
         m_slots.push_back(slot);
@@ -742,58 +829,47 @@ void MainWindow::switchPage(Page page)
     m_stack->setCurrentIndex(static_cast<int>(page));
     if (page == Page::Borrow && m_slotTitle) {
         m_slotTitle->setText(m_borrowMode ? tr("借伞模式") : tr("还伞模式"));
+        // 切换到借还页面时，如果已选择站点，刷新槽位状态
+        if (m_currentStationId > 0) {
+            refreshSlotsFromDatabase();
+            populateSlots(m_borrowMode);
+        } else {
+            // 如果没有选择站点，先显示空槽位
+            for (auto *slot : m_slots) {
+                slot->setState(SlotItem::State::Empty);
+                slot->setEnabled(false);
+            }
+        }
+    } else if (page == Page::Login && m_loginUserInfoLabel) {
+        // 切换到密码登录页面时，更新显示的用户信息
+        QString infoText = tr("学号/工号：%1\n姓名：%2")
+            .arg(m_tempUserId.isEmpty() ? tr("未知") : m_tempUserId)
+            .arg(m_tempUserName.isEmpty() ? tr("未知") : m_tempUserName);
+        m_loginUserInfoLabel->setText(infoText);
+    } else if (page == Page::UserInput) {
+        // 切换到用户输入页面时，清空输入框
+        if (m_inputUser) {
+            m_inputUser->clear();
+        }
+        if (m_inputName) {
+            m_inputName->clear();
+        }
     }
 }
 
 void MainWindow::populateSlots(bool borrowMode)
 {
-    struct Visual { QString label; QString path; };
-    static const QVector<Visual> visuals = {
-        {QStringLiteral("#1 普通塑料伞"), QStringLiteral(":/rgear_icons/plastic_unbrella.png")},
-        {QStringLiteral("#2 普通塑料伞"), QStringLiteral(":/rgear_icons/plastic_unbrella.png")},
-        {QStringLiteral("#3 普通塑料伞"), QStringLiteral(":/rgear_icons/plastic_unbrella.png")},
-        {QStringLiteral("#4 普通塑料伞"), QStringLiteral(":/rgear_icons/plastic_unbrella.png")},
-        {QStringLiteral("#5 高质量抗风伞"), QStringLiteral(":/rgear_icons/highquality_unbrella.png")},
-        {QStringLiteral("#6 高质量抗风伞"), QStringLiteral(":/rgear_icons/highquality_unbrella.png")},
-        {QStringLiteral("#7 高质量抗风伞"), QStringLiteral(":/rgear_icons/highquality_unbrella.png")},
-        {QStringLiteral("#8 高质量抗风伞"), QStringLiteral(":/rgear_icons/highquality_unbrella.png")},
-        {QStringLiteral("#9 遮阳伞"), QStringLiteral(":/rgear_icons/sunshade_umbrella.png")},
-        {QStringLiteral("#10 遮阳伞"), QStringLiteral(":/rgear_icons/sunshade_umbrella.png")},
-        {QStringLiteral("#11 雨衣"), QStringLiteral(":/rgear_icons/raincoat.png")},
-        {QStringLiteral("#12 雨衣"), QStringLiteral(":/rgear_icons/raincoat.png")}
-    };
-
-    // 绑定图标与描述到槽位
-    const int count = std::min(m_slots.size(), visuals.size());
-    for (int i = 0; i < count; ++i) {
-        QPixmap icon(visuals[i].path);
-        if (icon.isNull()) {
-            qWarning() << "Icon load failed:" << visuals[i].path;
-        }
-        m_slots[i]->setIcon(icon, visuals[i].label);
+    // 如果未选择站点，提示用户
+    if (m_currentStationId == 0) {
+        QMessageBox::warning(this, tr("提示"), tr("请先在主页面选择站点"));
+        switchPage(Page::Dashboard);
+        return;
     }
-
-    // Mock 状态：绿可借、灰可还、红维修
-    for (int i = 0; i < m_slots.size(); ++i) {
-        auto *slot = m_slots[i];
-        if (borrowMode) {
-            if (i == 2) {
-                slot->setState(SlotItem::State::Maintenance);
-            } else if (i % 2 == 0) {
-                slot->setState(SlotItem::State::Available);
-            } else {
-                slot->setState(SlotItem::State::Empty);
-            }
-        } else {
-            if (i == 5) {
-                slot->setState(SlotItem::State::Maintenance);
-            } else if (i % 3 == 0) {
-                slot->setState(SlotItem::State::Empty);
-            } else {
-                slot->setState(SlotItem::State::Available);
-            }
-        }
-    }
+    
+    // 从数据库刷新槽位状态（颜色和类型完全由 refreshSlotsFromDatabase 控制）
+    refreshSlotsFromDatabase();
+    // 不再通过 setEnabled(true/false) 灰掉控件，否则图标会显得“糊”；
+    // 借伞/还伞模式的可点击逻辑在 handleBorrowGear / handleReturnGear 中根据状态再做检查。
 }
 
 void MainWindow::updateRoleLabel()
@@ -887,5 +963,281 @@ bool MainWindow::performLogin()
     // 保留此函数以防其他地方调用
     QMessageBox::warning(this, tr("错误"), tr("此函数已废弃，请使用页面内的登录逻辑"));
     return false;
+}
+
+void MainWindow::loadStations()
+{
+    if (!m_stationComboBox) return;
+    
+    m_stationComboBox->clear();
+    m_stationComboBox->addItem(tr("-- 请选择站点 --"), 0);
+    
+    if (!DatabaseManager::init()) {
+        qWarning() << "[MainWindow] 数据库连接失败，无法加载站点";
+        return;
+    }
+    
+    auto stations = DatabaseManager::fetchAllStations();
+    for (const auto &station : stations) {
+        m_stationComboBox->addItem(station.name, station.stationId);
+    }
+    
+    qDebug() << "[MainWindow] 已加载" << stations.size() << "个站点";
+}
+
+void MainWindow::onStationChanged(int index)
+{
+    if (!m_stationComboBox || index < 0) return;
+    
+    int stationId = m_stationComboBox->itemData(index).toInt();
+    if (stationId == 0) {
+        m_currentStationId = 0;
+        return;
+    }
+    
+    m_currentStationId = stationId;
+    qDebug() << "[MainWindow] 站点已切换为:" << m_stationComboBox->itemText(index) << "ID:" << stationId;
+    
+    // 如果当前在借还页面，刷新槽位状态
+    if (m_stack && m_stack->currentIndex() == static_cast<int>(Page::Borrow)) {
+        refreshSlotsFromDatabase();
+    }
+}
+
+void MainWindow::refreshSlotsFromDatabase()
+{
+    if (m_currentStationId == 0) {
+        QMessageBox::warning(this, tr("提示"), tr("请先选择站点"));
+        return;
+    }
+    
+    if (!DatabaseManager::init()) {
+        QMessageBox::critical(this, tr("数据库错误"), tr("无法连接到数据库"));
+        return;
+    }
+    
+    // 从数据库查询该站点的所有雨具
+    auto gears = DatabaseManager::fetchGearsByStation(m_currentStationId);
+    
+    // 创建槽位映射：slot_id -> gear
+    QMap<int, DatabaseManager::GearRecord> slotMap;
+    for (const auto &gear : gears) {
+        if (gear.slotId >= 1 && gear.slotId <= 12) {
+            slotMap[gear.slotId] = gear;
+        }
+    }
+    
+    // 固定雨具类型分配：1-4普通塑料伞，5-8高质量抗风伞，9-10专用遮阳伞，11-12雨衣
+    static const QMap<int, std::pair<GearType, QString>> slotTypeMap = {
+        {1, {GearType::StandardPlastic, tr("普通塑料伞")}},
+        {2, {GearType::StandardPlastic, tr("普通塑料伞")}},
+        {3, {GearType::StandardPlastic, tr("普通塑料伞")}},
+        {4, {GearType::StandardPlastic, tr("普通塑料伞")}},
+        {5, {GearType::PremiumWindproof, tr("高质量抗风伞")}},
+        {6, {GearType::PremiumWindproof, tr("高质量抗风伞")}},
+        {7, {GearType::PremiumWindproof, tr("高质量抗风伞")}},
+        {8, {GearType::PremiumWindproof, tr("高质量抗风伞")}},
+        {9, {GearType::Sunshade, tr("专用遮阳伞")}},
+        {10, {GearType::Sunshade, tr("专用遮阳伞")}},
+        {11, {GearType::Raincoat, tr("雨衣")}},
+        {12, {GearType::Raincoat, tr("雨衣")}}
+    };
+    
+    // 使用RainGearFactory创建雨具对象并设置到槽位
+    for (int i = 0; i < m_slots.size() && i < 12; ++i) {
+        int slotId = i + 1; // 槽位ID从1开始
+        auto *slot = m_slots[i];
+        
+        // 获取该槽位的固定类型
+        auto typeInfo = slotTypeMap.value(slotId);
+        GearType expectedType = typeInfo.first;
+        QString typeName = typeInfo.second;
+        
+        // 创建对应类型的雨具对象（用于获取图标）
+        QString gearId = slotMap.contains(slotId) ? slotMap[slotId].gearId : QStringLiteral("PLACEHOLDER_%1").arg(slotId);
+        auto rainGear = RainGearFactory::create_raingear(expectedType, gearId);
+        
+        if (rainGear) {
+            // 设置图标（直接加载，不缩放）
+            QString iconPath = rainGear->get_iconpath();
+            QPixmap icon(iconPath);
+            if (icon.isNull()) {
+                qWarning() << "[MainWindow] 无法加载图标:" << iconPath;
+            } else {
+                // 确保图标清晰，不进行任何缩放处理
+                qDebug() << "[MainWindow] 加载图标:" << iconPath << "原始尺寸:" << icon.size();
+            }
+            QString label = QStringLiteral("#%1").arg(slotId);
+            slot->setIcon(icon, label);
+            slot->setGearTypeName(typeName); // 设置雨具类型名称
+            
+            // 根据数据库状态设置颜色
+            if (slotMap.contains(slotId)) {
+                const auto &gear = slotMap[slotId];
+                if (gear.status == 1) {
+                    // 可借状态 - 绿色
+                    slot->setState(SlotItem::State::Available);
+                } else if (gear.status == 2) {
+                    // 已借出 - 灰色（空槽）
+                    slot->setState(SlotItem::State::Empty);
+                } else if (gear.status == 3) {
+                    // 损坏 - 红色
+                    slot->setState(SlotItem::State::Maintenance);
+                }
+            } else {
+                // 该槽位没有雨具 - 灰色（空槽）
+                slot->setState(SlotItem::State::Empty);
+            }
+        } else {
+            // 无法创建雨具对象
+            qWarning() << "[MainWindow] 无法创建雨具对象，slotId:" << slotId;
+            slot->setState(SlotItem::State::Empty);
+            slot->setIcon(QPixmap(), QStringLiteral("#%1").arg(slotId));
+            slot->setGearTypeName(typeName);
+        }
+        
+        // 确保样式已应用
+        slot->setEnabled(true);
+    }
+    
+    qDebug() << "[MainWindow] 已刷新站点" << m_currentStationId << "的槽位状态，共" << gears.size() << "个雨具";
+}
+
+void MainWindow::handleBorrowGear(int slotId, int slotIndex)
+{
+    if (!m_currentUser || m_currentStationId == 0) {
+        QMessageBox::warning(this, tr("错误"), tr("请先登录并选择站点"));
+        return;
+    }
+    
+    // 查询该槽位的雨具
+    auto gears = DatabaseManager::fetchGearsByStation(m_currentStationId);
+    QString gearId;
+    int typeId = 0;
+    
+    for (const auto &gear : gears) {
+        if (gear.slotId == slotId && gear.status == 1) {
+            gearId = gear.gearId;
+            typeId = gear.typeId;
+            break;
+        }
+    }
+    
+    if (gearId.isEmpty()) {
+        QMessageBox::warning(this, tr("提示"), tr("该槽位没有可借的雨具"));
+        return;
+    }
+    
+    // 检查用户是否已有借出的雨具
+    auto currentBorrow = DatabaseManager::fetchUserCurrentBorrow(m_currentUser->get_id());
+    if (currentBorrow) {
+        QMessageBox::warning(this, tr("提示"), tr("您还有未归还的雨具，请先归还后再借。"));
+        return;
+    }
+    
+    // 计算押金
+    double deposit = 0.0;
+    switch (typeId) {
+        case 1: deposit = 10.0; break;  // 普通塑料伞
+        case 2: deposit = 20.0; break;  // 高质量抗风伞
+        case 3: deposit = 15.0; break; // 遮阳伞
+        case 4: deposit = 25.0; break; // 雨衣
+        default: deposit = 20.0; break;
+    }
+    
+    // 检查余额
+    if (m_currentUser->get_credit() < deposit) {
+        QMessageBox::warning(this, tr("余额不足"), 
+            tr("您的余额不足，需要押金 %1 元，当前余额 %2 元").arg(deposit).arg(m_currentUser->get_credit()));
+        return;
+    }
+    
+    // 确认对话框
+    int ret = QMessageBox::question(this, tr("确认借伞"), 
+        tr("确认借出该雨具？\n押金：%1 元\n当前余额：%2 元").arg(deposit).arg(m_currentUser->get_credit()),
+        QMessageBox::Yes | QMessageBox::No);
+    
+    if (ret != QMessageBox::Yes) {
+        return;
+    }
+    
+    // 执行借伞操作
+    if (!DatabaseManager::borrowGear(m_currentUser->get_id(), gearId, m_currentStationId, slotId, deposit)) {
+        QMessageBox::critical(this, tr("借伞失败"), tr("借伞操作失败，请重试或联系管理员。"));
+        return;
+    }
+    
+    // 更新用户余额显示
+    m_currentUser->deduct(deposit);
+    updateProfileFromUser();
+    
+    // 刷新槽位状态
+    refreshSlotsFromDatabase();
+    populateSlots(true);
+    
+    QMessageBox::information(this, tr("借伞成功"), tr("雨具已成功借出！\n押金：%1 元已扣除").arg(deposit));
+}
+
+void MainWindow::handleReturnGear(int slotId, int slotIndex)
+{
+    if (!m_currentUser || m_currentStationId == 0) {
+        QMessageBox::warning(this, tr("错误"), tr("请先登录并选择站点"));
+        return;
+    }
+    
+    // 检查用户是否有借出的雨具
+    auto currentBorrow = DatabaseManager::fetchUserCurrentBorrow(m_currentUser->get_id());
+    if (!currentBorrow) {
+        QMessageBox::warning(this, tr("提示"), tr("您当前没有借出的雨具"));
+        return;
+    }
+    
+    QString gearId = currentBorrow->gearId;
+    
+    // 检查该槽位是否为空
+    auto gears = DatabaseManager::fetchGearsByStation(m_currentStationId);
+    for (const auto &gear : gears) {
+        if (gear.slotId == slotId && gear.status == 1) {
+            QMessageBox::warning(this, tr("提示"), tr("该槽位已被占用，请选择其他空槽位"));
+            return;
+        }
+    }
+    
+    // 确认对话框
+    int ret = QMessageBox::question(this, tr("确认还伞"), 
+        tr("确认将雨具归还到槽位 #%1？").arg(slotId),
+        QMessageBox::Yes | QMessageBox::No);
+    
+    if (ret != QMessageBox::Yes) {
+        return;
+    }
+    
+    // 执行还伞操作
+    auto [success, cost] = DatabaseManager::returnGear(m_currentUser->get_id(), gearId, m_currentStationId, slotId);
+    
+    if (!success) {
+        QMessageBox::critical(this, tr("还伞失败"), tr("还伞操作失败，请重试或联系管理员。"));
+        return;
+    }
+    
+    // 更新用户余额显示（押金已退还，扣除费用）
+    // 注意：returnGear已经处理了余额更新，这里需要重新从数据库加载用户信息
+    auto userRecord = DatabaseManager::fetchUserByIdAndName(m_currentUser->get_id(), m_currentUser->get_name());
+    if (userRecord) {
+        m_currentUser->recharge(userRecord->credit - m_currentUser->get_credit());
+    }
+    updateProfileFromUser();
+    
+    // 刷新槽位状态
+    refreshSlotsFromDatabase();
+    populateSlots(false);
+    
+    QString msg = tr("雨具已成功归还！");
+    if (cost > 0) {
+        msg += tr("\n使用费用：%1 元").arg(cost);
+    } else {
+        msg += tr("\n24小时内免费，已全额退还押金");
+    }
+    QMessageBox::information(this, tr("还伞成功"), msg);
 }
 

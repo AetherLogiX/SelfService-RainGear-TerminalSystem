@@ -455,4 +455,18 @@ CMakeFiles/RainHub.dir/client/main.cpp.obj: \
  C:/Users/hdcqW/Desktop/Rainhub/Model/RainGear.hpp \
  C:/Users/hdcqW/Desktop/Rainhub/Model/GlobalEnum.hpp \
  E:/Qt/6.9.3/mingw_64/include/QtCore/QObject \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qobject.h
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qobject.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/QComboBox \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qcombobox.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractitemdelegate.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qstyleoption.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractspinbox.h \
+ E:/Qt/6.9.3/mingw_64/include/QtGui/qvalidator.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qregularexpression.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qslider.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractslider.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qstyle.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qtabbar.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qrubberband.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qframe.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qabstractitemmodel.h

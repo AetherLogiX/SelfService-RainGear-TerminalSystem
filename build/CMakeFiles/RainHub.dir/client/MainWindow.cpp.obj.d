@@ -392,11 +392,28 @@ CMakeFiles/RainHub.dir/client/MainWindow.cpp.obj: \
  C:/Users/hdcqW/Desktop/Rainhub/Model/GlobalEnum.hpp \
  E:/Qt/6.9.3/mingw_64/include/QtCore/QObject \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qobject.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/QComboBox \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qcombobox.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractitemdelegate.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qstyleoption.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qlocale.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractspinbox.h \
+ E:/Qt/6.9.3/mingw_64/include/QtGui/qvalidator.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qregularexpression.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qslider.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractslider.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qstyle.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qtabbar.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qrubberband.h \
+ E:/Qt/6.9.3/mingw_64/include/QtWidgets/qframe.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qabstractitemmodel.h \
  C:\Users\hdcqW\Desktop\Rainhub\client\SlotItem.h \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/QWidget \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qwidget.h \
  E:/Qt/6.9.3/mingw_64/include/QtGui/QPixmap \
  E:/Qt/6.9.3/mingw_64/include/QtGui/qpixmap.h \
+ C:/Users/hdcqW/Desktop/Rainhub/Model/RainGearFactory.h \
+ C:/Users/hdcqW/Desktop/Rainhub/Model/RainGear_subclasses.hpp \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/QApplication \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qapplication.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qcoreapplication.h \
@@ -410,7 +427,6 @@ CMakeFiles/RainHub.dir/client/MainWindow.cpp.obj: \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qcoreapplication_platform.h \
  E:/Qt/6.9.3/mingw_64/include/QtGui/qguiapplication.h \
  E:/Qt/6.9.3/mingw_64/include/QtGui/qinputmethod.h \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qlocale.h \
  E:/Qt/6.9.3/mingw_64/include/QtGui/qguiapplication_platform.h \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/QFormLayout \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qformlayout.h \
@@ -426,7 +442,6 @@ CMakeFiles/RainHub.dir/client/MainWindow.cpp.obj: \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qboxlayout.h \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/QLabel \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qlabel.h \
- E:/Qt/6.9.3/mingw_64/include/QtWidgets/qframe.h \
  E:/Qt/6.9.3/mingw_64/include/QtGui/qpicture.h \
  E:/Qt/6.9.3/mingw_64/include/QtCore/qiodevice.h \
  E:/Qt/6.9.3/mingw_64/include/QtGui/qtextdocument.h \
@@ -437,6 +452,8 @@ CMakeFiles/RainHub.dir/client/MainWindow.cpp.obj: \
  E:/Qt/6.9.3/mingw_64/include/QtGui/qtextformat.h \
  E:/Qt/6.9.3/mingw_64/include/QtGui/qpen.h \
  E:/Qt/6.9.3/mingw_64/include/QtGui/qtextoption.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/QMap \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qmap.h \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/QMessageBox \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qmessagebox.h \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qdialog.h \

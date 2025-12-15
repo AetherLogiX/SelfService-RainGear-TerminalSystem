@@ -244,6 +244,7 @@ C:/Users/hdcqW/Desktop/Rainhub/client/MainWindow.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/q20type_traits.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/q20utility.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/q23utility.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qabstractitemmodel.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qalgorithms.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qanystringview.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qarraydata.h
@@ -290,6 +291,7 @@ C:/Users/hdcqW/Desktop/Rainhub/client/MainWindow.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qlatin1stringview.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qline.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qlist.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qlocale.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qlogging.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qmalloc.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qmap.h
@@ -310,6 +312,7 @@ C:/Users/hdcqW/Desktop/Rainhub/client/MainWindow.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qprocessordetection.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qrect.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qrefcount.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qregularexpression.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qscopedpointer.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qscopeguard.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtCore/qset.h
@@ -387,11 +390,23 @@ C:/Users/hdcqW/Desktop/Rainhub/client/MainWindow.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtGui/qtguiexports.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtGui/qtguiglobal.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtGui/qtransform.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtGui/qvalidator.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtGui/qwindowdefs.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtGui/qwindowdefs_win.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/QComboBox
  mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/QMainWindow
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractitemdelegate.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractslider.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractspinbox.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qcombobox.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qframe.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qmainwindow.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qrubberband.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qsizepolicy.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qslider.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qstyle.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qstyleoption.h
+ mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qtabbar.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qtabwidget.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qtwidgets-config.h
  mdp:E:/Qt/6.9.3/mingw_64/include/QtWidgets/qtwidgetsexports.h

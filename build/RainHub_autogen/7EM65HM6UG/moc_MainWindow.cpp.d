@@ -229,6 +229,7 @@ C:/Users/hdcqW/Desktop/Rainhub/build/RainHub_autogen/7EM65HM6UG/moc_MainWindow.c
   E:/Qt/6.9.3/mingw_64/include/QtCore/q20type_traits.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/q20utility.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/q23utility.h \
+  E:/Qt/6.9.3/mingw_64/include/QtCore/qabstractitemmodel.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qalgorithms.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qanystringview.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qarraydata.h \
@@ -275,6 +276,7 @@ C:/Users/hdcqW/Desktop/Rainhub/build/RainHub_autogen/7EM65HM6UG/moc_MainWindow.c
   E:/Qt/6.9.3/mingw_64/include/QtCore/qlatin1stringview.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qline.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qlist.h \
+  E:/Qt/6.9.3/mingw_64/include/QtCore/qlocale.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qlogging.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qmalloc.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qmap.h \
@@ -295,6 +297,7 @@ C:/Users/hdcqW/Desktop/Rainhub/build/RainHub_autogen/7EM65HM6UG/moc_MainWindow.c
   E:/Qt/6.9.3/mingw_64/include/QtCore/qprocessordetection.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qrect.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qrefcount.h \
+  E:/Qt/6.9.3/mingw_64/include/QtCore/qregularexpression.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qscopedpointer.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qscopeguard.h \
   E:/Qt/6.9.3/mingw_64/include/QtCore/qset.h \
@@ -372,11 +375,23 @@ C:/Users/hdcqW/Desktop/Rainhub/build/RainHub_autogen/7EM65HM6UG/moc_MainWindow.c
   E:/Qt/6.9.3/mingw_64/include/QtGui/qtguiexports.h \
   E:/Qt/6.9.3/mingw_64/include/QtGui/qtguiglobal.h \
   E:/Qt/6.9.3/mingw_64/include/QtGui/qtransform.h \
+  E:/Qt/6.9.3/mingw_64/include/QtGui/qvalidator.h \
   E:/Qt/6.9.3/mingw_64/include/QtGui/qwindowdefs.h \
   E:/Qt/6.9.3/mingw_64/include/QtGui/qwindowdefs_win.h \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/QComboBox \
   E:/Qt/6.9.3/mingw_64/include/QtWidgets/QMainWindow \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractitemdelegate.h \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractslider.h \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractspinbox.h \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qcombobox.h \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qframe.h \
   E:/Qt/6.9.3/mingw_64/include/QtWidgets/qmainwindow.h \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qrubberband.h \
   E:/Qt/6.9.3/mingw_64/include/QtWidgets/qsizepolicy.h \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qslider.h \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qstyle.h \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qstyleoption.h \
+  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qtabbar.h \
   E:/Qt/6.9.3/mingw_64/include/QtWidgets/qtabwidget.h \
   E:/Qt/6.9.3/mingw_64/include/QtWidgets/qtwidgets-config.h \
   E:/Qt/6.9.3/mingw_64/include/QtWidgets/qtwidgetsexports.h \

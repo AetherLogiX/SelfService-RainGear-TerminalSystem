@@ -6,6 +6,7 @@
 #include <QSqlQuery>
 #include <QVariant>
 #include <QDebug>
+#include <QDateTime>
 
 std::optional<DatabaseManager::UserRecord> DatabaseManager::fetchUserByIdAndName(const QString &userId, const QString &realName)
 {
@@ -187,6 +188,397 @@ bool DatabaseManager::ensureConnectionOpen()
 QSqlDatabase DatabaseManager::connection()
 {
     return DBHelper::getThreadLocalConnection();
+}
+
+// ========== 用户余额更新 ==========
+bool DatabaseManager::updateUserBalance(const QString &userId, double amount)
+{
+    if (userId.trimmed().isEmpty()) {
+        qWarning() << "[DB] 空账号";
+        return false;
+    }
+
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return false;
+    }
+
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral(
+        "UPDATE users SET credit = credit + :amount WHERE user_id = :uid"));
+    query.bindValue(":amount", amount);
+    query.bindValue(":uid", userId.trimmed());
+    
+    if (!query.exec()) {
+        qWarning() << "[DB] 更新余额失败:" << query.lastError().text();
+        return false;
+    }
+    
+    qInfo() << "[DB] 用户" << userId << "余额已更新，变化:" << amount;
+    return true;
+}
+
+// ========== 站点相关 ==========
+QVector<DatabaseManager::StationRecord> DatabaseManager::fetchAllStations()
+{
+    QVector<StationRecord> stations;
+    
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return stations;
+    }
+
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral(
+        "SELECT station_id, name, pos_x, pos_y, status FROM station ORDER BY station_id"));
+    
+    if (!query.exec()) {
+        qWarning() << "[DB] 查询站点失败:" << query.lastError().text();
+        return stations;
+    }
+
+    while (query.next()) {
+        StationRecord rec;
+        rec.stationId = query.value(0).toInt();
+        rec.name = query.value(1).toString();
+        rec.posX = query.value(2).toFloat();
+        rec.posY = query.value(3).toFloat();
+        rec.status = query.value(4).toInt();
+        stations.append(rec);
+    }
+    
+    return stations;
+}
+
+// ========== 雨具相关 ==========
+QVector<DatabaseManager::GearRecord> DatabaseManager::fetchGearsByStation(int stationId)
+{
+    QVector<GearRecord> gears;
+    
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return gears;
+    }
+
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral(
+        "SELECT gear_id, type_id, station_id, slot_id, status "
+        "FROM raingear WHERE station_id = :sid ORDER BY slot_id"));
+    query.bindValue(":sid", stationId);
+    
+    if (!query.exec()) {
+        qWarning() << "[DB] 查询雨具失败:" << query.lastError().text();
+        return gears;
+    }
+
+    while (query.next()) {
+        GearRecord rec;
+        rec.gearId = query.value(0).toString();
+        rec.typeId = query.value(1).toInt();
+        rec.stationId = query.value(2).toInt();
+        rec.slotId = query.value(3).toInt();
+        rec.status = query.value(4).toInt();
+        gears.append(rec);
+    }
+    
+    return gears;
+}
+
+std::optional<DatabaseManager::GearRecord> DatabaseManager::fetchGearById(const QString &gearId)
+{
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return std::nullopt;
+    }
+
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral(
+        "SELECT gear_id, type_id, station_id, slot_id, status "
+        "FROM raingear WHERE gear_id = :gid LIMIT 1"));
+    query.bindValue(":gid", gearId);
+    
+    if (!query.exec()) {
+        qWarning() << "[DB] 查询雨具失败:" << query.lastError().text();
+        return std::nullopt;
+    }
+
+    if (query.next()) {
+        GearRecord rec;
+        rec.gearId = query.value(0).toString();
+        rec.typeId = query.value(1).toInt();
+        rec.stationId = query.value(2).toInt();
+        rec.slotId = query.value(3).toInt();
+        rec.status = query.value(4).toInt();
+        return rec;
+    }
+    
+    return std::nullopt;
+}
+
+// ========== 借还操作 ==========
+bool DatabaseManager::borrowGear(const QString &userId, const QString &gearId, int stationId, int slotId, double deposit)
+{
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return false;
+    }
+
+    // 开启事务
+    if (!db.transaction()) {
+        qWarning() << "[DB] 无法开启事务";
+        return false;
+    }
+
+    QSqlQuery query(db);
+    bool success = true;
+
+    try {
+        // 1. 检查用户余额是否充足
+        query.prepare(QStringLiteral("SELECT credit FROM users WHERE user_id = :uid LIMIT 1"));
+        query.bindValue(":uid", userId);
+        if (!query.exec() || !query.next()) {
+            qWarning() << "[DB] 用户不存在";
+            db.rollback();
+            return false;
+        }
+        double currentBalance = query.value(0).toDouble();
+        if (currentBalance < deposit) {
+            qWarning() << "[DB] 余额不足，当前余额:" << currentBalance << "需要:" << deposit;
+            db.rollback();
+            return false;
+        }
+
+        // 2. 检查雨具是否可借
+        query.prepare(QStringLiteral(
+            "SELECT status FROM raingear WHERE gear_id = :gid AND station_id = :sid AND slot_id = :slid LIMIT 1"));
+        query.bindValue(":gid", gearId);
+        query.bindValue(":sid", stationId);
+        query.bindValue(":slid", slotId);
+        if (!query.exec() || !query.next()) {
+            qWarning() << "[DB] 雨具不存在或位置不匹配";
+            db.rollback();
+            return false;
+        }
+        int gearStatus = query.value(0).toInt();
+        if (gearStatus != 1) { // 1表示可借
+            qWarning() << "[DB] 雨具不可借，状态:" << gearStatus;
+            db.rollback();
+            return false;
+        }
+
+        // 3. 扣除用户余额
+        query.prepare(QStringLiteral("UPDATE users SET credit = credit - :deposit WHERE user_id = :uid"));
+        query.bindValue(":deposit", deposit);
+        query.bindValue(":uid", userId);
+        if (!query.exec()) {
+            qWarning() << "[DB] 扣除余额失败:" << query.lastError().text();
+            db.rollback();
+            return false;
+        }
+
+        // 4. 更新雨具状态（设为已借出，清空station_id和slot_id）
+        query.prepare(QStringLiteral(
+            "UPDATE raingear SET status = 2, station_id = NULL, slot_id = NULL WHERE gear_id = :gid"));
+        query.bindValue(":gid", gearId);
+        if (!query.exec()) {
+            qWarning() << "[DB] 更新雨具状态失败:" << query.lastError().text();
+            db.rollback();
+            return false;
+        }
+
+        // 5. 创建借还记录
+        query.prepare(QStringLiteral(
+            "INSERT INTO record (user_id, gear_id, borrow_time, cost) "
+            "VALUES (:uid, :gid, NOW(), 0.00)"));
+        query.bindValue(":uid", userId);
+        query.bindValue(":gid", gearId);
+        if (!query.exec()) {
+            qWarning() << "[DB] 创建借还记录失败:" << query.lastError().text();
+            db.rollback();
+            return false;
+        }
+
+        // 提交事务
+        if (!db.commit()) {
+            qWarning() << "[DB] 提交事务失败";
+            db.rollback();
+            return false;
+        }
+
+        qInfo() << "[DB] 借伞成功: 用户" << userId << "借出雨具" << gearId;
+        return true;
+
+    } catch (...) {
+        db.rollback();
+        qWarning() << "[DB] 借伞操作异常，已回滚";
+        return false;
+    }
+}
+
+std::pair<bool, double> DatabaseManager::returnGear(const QString &userId, const QString &gearId, int stationId, int slotId)
+{
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return {false, 0.0};
+    }
+
+    // 开启事务
+    if (!db.transaction()) {
+        qWarning() << "[DB] 无法开启事务";
+        return {false, 0.0};
+    }
+
+    QSqlQuery query(db);
+    double cost = 0.0;
+
+    try {
+        // 1. 查找未归还的借还记录
+        query.prepare(QStringLiteral(
+            "SELECT record_id, borrow_time FROM record "
+            "WHERE user_id = :uid AND gear_id = :gid AND return_time IS NULL LIMIT 1"));
+        query.bindValue(":uid", userId);
+        query.bindValue(":gid", gearId);
+        if (!query.exec() || !query.next()) {
+            qWarning() << "[DB] 未找到对应的借出记录";
+            db.rollback();
+            return {false, 0.0};
+        }
+        qint64 recordId = query.value(0).toLongLong();
+        QDateTime borrowTime = query.value(1).toDateTime();
+
+        // 2. 计算费用（24小时内免费，超过24小时按1元/12小时）
+        QDateTime now = QDateTime::currentDateTime();
+        qint64 hours = borrowTime.secsTo(now) / 3600;
+        if (hours > 24) {
+            qint64 extraHours = hours - 24;
+            cost = (extraHours / 12.0) * 1.0; // 每12小时1元
+            if (cost < 0) cost = 0;
+        }
+
+        // 3. 检查槽位是否已被占用
+        query.prepare(QStringLiteral(
+            "SELECT COUNT(*) FROM raingear WHERE station_id = :sid AND slot_id = :slid AND status = 1"));
+        query.bindValue(":sid", stationId);
+        query.bindValue(":slid", slotId);
+        if (!query.exec() || !query.next()) {
+            qWarning() << "[DB] 检查槽位失败";
+            db.rollback();
+            return {false, 0.0};
+        }
+        if (query.value(0).toInt() > 0) {
+            qWarning() << "[DB] 槽位已被占用";
+            db.rollback();
+            return {false, 0.0};
+        }
+
+        // 4. 获取雨具押金（需要根据type_id计算）
+        query.prepare(QStringLiteral("SELECT type_id FROM raingear WHERE gear_id = :gid LIMIT 1"));
+        query.bindValue(":gid", gearId);
+        if (!query.exec() || !query.next()) {
+            qWarning() << "[DB] 查询雨具类型失败";
+            db.rollback();
+            return {false, 0.0};
+        }
+        int typeId = query.value(0).toInt();
+        double deposit = 0.0;
+        switch (typeId) {
+            case 1: deposit = 10.0; break;  // 普通塑料伞
+            case 2: deposit = 20.0; break;  // 高质量抗风伞
+            case 3: deposit = 15.0; break; // 遮阳伞
+            case 4: deposit = 25.0; break; // 雨衣
+            default: deposit = 20.0; break;
+        }
+
+        // 5. 更新雨具状态（设为可借，设置station_id和slot_id）
+        query.prepare(QStringLiteral(
+            "UPDATE raingear SET status = 1, station_id = :sid, slot_id = :slid WHERE gear_id = :gid"));
+        query.bindValue(":sid", stationId);
+        query.bindValue(":slid", slotId);
+        query.bindValue(":gid", gearId);
+        if (!query.exec()) {
+            qWarning() << "[DB] 更新雨具状态失败:" << query.lastError().text();
+            db.rollback();
+            return {false, 0.0};
+        }
+
+        // 6. 退还押金（扣除费用后）
+        double refund = deposit - cost;
+        if (refund > 0) {
+            query.prepare(QStringLiteral("UPDATE users SET credit = credit + :refund WHERE user_id = :uid"));
+            query.bindValue(":refund", refund);
+            query.bindValue(":uid", userId);
+            if (!query.exec()) {
+                qWarning() << "[DB] 退还押金失败:" << query.lastError().text();
+                db.rollback();
+                return {false, 0.0};
+            }
+        }
+
+        // 7. 更新借还记录
+        query.prepare(QStringLiteral(
+            "UPDATE record SET return_time = NOW(), cost = :cost WHERE record_id = :rid"));
+        query.bindValue(":cost", cost);
+        query.bindValue(":rid", recordId);
+        if (!query.exec()) {
+            qWarning() << "[DB] 更新借还记录失败:" << query.lastError().text();
+            db.rollback();
+            return {false, 0.0};
+        }
+
+        // 提交事务
+        if (!db.commit()) {
+            qWarning() << "[DB] 提交事务失败";
+            db.rollback();
+            return {false, 0.0};
+        }
+
+        qInfo() << "[DB] 还伞成功: 用户" << userId << "归还雨具" << gearId << "费用:" << cost;
+        return {true, cost};
+
+    } catch (...) {
+        db.rollback();
+        qWarning() << "[DB] 还伞操作异常，已回滚";
+        return {false, 0.0};
+    }
+}
+
+std::optional<DatabaseManager::BorrowRecord> DatabaseManager::fetchUserCurrentBorrow(const QString &userId)
+{
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return std::nullopt;
+    }
+
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral(
+        "SELECT record_id, user_id, gear_id, borrow_time, return_time, cost "
+        "FROM record WHERE user_id = :uid AND return_time IS NULL LIMIT 1"));
+    query.bindValue(":uid", userId);
+    
+    if (!query.exec()) {
+        qWarning() << "[DB] 查询借还记录失败:" << query.lastError().text();
+        return std::nullopt;
+    }
+
+    if (query.next()) {
+        BorrowRecord rec;
+        rec.recordId = query.value(0).toLongLong();
+        rec.userId = query.value(1).toString();
+        rec.gearId = query.value(2).toString();
+        rec.borrowTime = query.value(3).toString();
+        rec.returnTime = query.value(4).toString();
+        rec.cost = query.value(5).toDouble();
+        return rec;
+    }
+    
+    return std::nullopt;
 }
 
 
