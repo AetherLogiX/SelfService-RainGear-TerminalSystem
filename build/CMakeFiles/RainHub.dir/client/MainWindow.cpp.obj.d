@@ -469,4 +469,54 @@ CMakeFiles/RainHub.dir/client/MainWindow.cpp.obj: \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/qabstractscrollarea.h \
  E:/Qt/6.9.3/mingw_64/include/QtWidgets/QVBoxLayout \
  E:/Qt/6.9.3/mingw_64/include/QtCore/QDebug \
- E:/Qt/6.9.3/mingw_64/include/QtCore/qdebug.h
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qdebug.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/QFile \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qfile.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qfiledevice.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/filesystem \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/fs_fwd.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/fs_path.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/locale \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/locale_facets.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/cwctype \
+ C:/msys64/ucrt64/include/wctype.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/x86_64-w64-mingw32/bits/ctype_base.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/x86_64-w64-mingw32/bits/ctype_inline.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/locale_facets.tcc \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/locale_facets_nonio.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/x86_64-w64-mingw32/bits/time_members.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/x86_64-w64-mingw32/bits/messages_members.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/codecvt.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/locale_facets_nonio.tcc \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/locale_conv.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/iomanip \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/quoted_string.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/sstream \
+ C:/msys64/ucrt64/include/c++/15.2.0/istream \
+ C:/msys64/ucrt64/include/c++/15.2.0/ios \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/basic_ios.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/basic_ios.tcc \
+ C:/msys64/ucrt64/include/c++/15.2.0/ostream \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/ostream.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/ostream.tcc \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/istream.tcc \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/sstream.tcc \
+ C:/msys64/ucrt64/include/c++/15.2.0/codecvt \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/fs_dir.h \
+ C:/msys64/ucrt64/include/c++/15.2.0/bits/fs_ops.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/QJsonDocument \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qjsondocument.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qjsonparseerror.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/QJsonObject \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qjsonobject.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qjsonvalue.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qcborvalue.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qcborcommon.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qdatetime.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qcalendar.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/quuid.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qjsondocument.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/QJsonArray \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qjsonarray.h \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/QTimer \
+ E:/Qt/6.9.3/mingw_64/include/QtCore/qtimer.h

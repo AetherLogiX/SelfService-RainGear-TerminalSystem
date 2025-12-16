@@ -75,6 +75,7 @@ private:
     Role m_currentRole { Role::Unknown };
     QLabel *m_loginRoleLabel { nullptr };
     QLabel *m_loginUserInfoLabel { nullptr }; // 密码页面显示用户信息的标签
+    QLabel *m_firstLoginUserInfoLabel { nullptr }; // 首次登录页面显示用户信息的标签
     QLineEdit *m_inputUser { nullptr };      // 学号/工号输入
     QLineEdit *m_inputName { nullptr };      // 姓名输入
     QLineEdit *m_inputPass { nullptr };      // 密码输入
@@ -90,6 +91,7 @@ private:
     void loadStations();                      // 加载站点列表
     void onStationChanged(int index);        // 站点选择改变时的处理
     void refreshSlotsFromDatabase();         // 从数据库刷新槽位状态
+    void loadMapStations(QWidget *mapContainer); // 加载地图站点并绘制
 
     // Profile mock labels
     QLabel *m_profileName { nullptr };

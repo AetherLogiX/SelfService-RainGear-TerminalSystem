@@ -19,6 +19,11 @@
 #include <QVBoxLayout>
 #include <QWidget>
 #include <QDebug>
+#include <QFile>
+#include <QJsonDocument>
+#include <QJsonObject>
+#include <QJsonArray>
+#include <QTimer>
 #include <algorithm>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -244,18 +249,15 @@ QWidget* MainWindow::createFirstLoginPage()
     infoLayout->setAlignment(Qt::AlignHCenter);
     infoLayout->setSpacing(8);
     
-    auto *userInfoLabel = new QLabel(page);
-    userInfoLabel->setStyleSheet("font-size:16px; color:#34495e;");
-    userInfoLabel->setAlignment(Qt::AlignCenter);
-    // 使用lambda更新显示的用户信息
-    auto updateUserInfo = [userInfoLabel, this]() {
-        QString infoText = tr("学号/工号：%1\n姓名：%2")
-            .arg(m_tempUserId.isEmpty() ? tr("未知") : m_tempUserId)
-            .arg(m_tempUserName.isEmpty() ? tr("未知") : m_tempUserName);
-        userInfoLabel->setText(infoText);
-    };
-    updateUserInfo();
-    infoLayout->addWidget(userInfoLabel);
+    m_firstLoginUserInfoLabel = new QLabel(page);
+    m_firstLoginUserInfoLabel->setStyleSheet("font-size:16px; color:#34495e;");
+    m_firstLoginUserInfoLabel->setAlignment(Qt::AlignCenter);
+    // 初始化显示用户信息
+    QString infoText = tr("学号/工号：%1\n姓名：%2")
+        .arg(m_tempUserId.isEmpty() ? tr("未知") : m_tempUserId)
+        .arg(m_tempUserName.isEmpty() ? tr("未知") : m_tempUserName);
+    m_firstLoginUserInfoLabel->setText(infoText);
+    infoLayout->addWidget(m_firstLoginUserInfoLabel);
 
     auto *form = new QFormLayout();
     form->setLabelAlignment(Qt::AlignRight);
@@ -279,7 +281,9 @@ QWidget* MainWindow::createFirstLoginPage()
     btnSubmit->setStyleSheet("font-size:16px; padding:10px;");
     connect(btnSubmit, &QPushButton::clicked, this, [this] {
         if (performFirstLogin()) {
-            switchPage(Page::Dashboard);
+            // 注册成功后，跳转到登录页面，让用户重新输入密码登录
+            QMessageBox::information(this, tr("注册成功"), tr("密码设置成功！请使用新密码登录。"));
+            switchPage(Page::Login);
         }
     });
 
@@ -712,17 +716,29 @@ QWidget* MainWindow::createMapPage()
     layout->setContentsMargins(16, 16, 16, 16);
     layout->setSpacing(12);
 
-    auto *title = new QLabel(tr("地图占位（后续接入真实散点）"), page);
+    // 顶部标题栏
+    auto *topBar = new QHBoxLayout();
+    auto *title = new QLabel(tr("校园雨具站点分布图"), page);
     title->setStyleSheet("font-size:18px; font-weight:700;");
     auto *btnBack = new QPushButton(tr("返回"), page);
     btnBack->setFixedWidth(120);
     connect(btnBack, &QPushButton::clicked, this, [this] {
         switchPage(Page::Dashboard);
     });
+    topBar->addWidget(title);
+    topBar->addStretch();
+    topBar->addWidget(btnBack);
 
-    layout->addWidget(title, 0, Qt::AlignLeft);
-    layout->addStretch();
-    layout->addWidget(btnBack, 0, Qt::AlignRight);
+    // 地图容器（使用QWidget作为画布）
+    auto *mapContainer = new QWidget(page);
+    mapContainer->setMinimumSize(800, 600);
+    mapContainer->setStyleSheet("background-color: #ecf0f1; border: 2px solid #bdc3c7; border-radius: 8px;");
+    
+    // 加载站点数据并绘制
+    loadMapStations(mapContainer);
+
+    layout->addLayout(topBar);
+    layout->addWidget(mapContainer, 1);
     return page;
 }
 
@@ -846,6 +862,12 @@ void MainWindow::switchPage(Page page)
             .arg(m_tempUserId.isEmpty() ? tr("未知") : m_tempUserId)
             .arg(m_tempUserName.isEmpty() ? tr("未知") : m_tempUserName);
         m_loginUserInfoLabel->setText(infoText);
+    } else if (page == Page::FirstLogin && m_firstLoginUserInfoLabel) {
+        // 切换到首次登录页面时，更新显示的用户信息
+        QString infoText = tr("学号/工号：%1\n姓名：%2")
+            .arg(m_tempUserId.isEmpty() ? tr("未知") : m_tempUserId)
+            .arg(m_tempUserName.isEmpty() ? tr("未知") : m_tempUserName);
+        m_firstLoginUserInfoLabel->setText(infoText);
     } else if (page == Page::UserInput) {
         // 切换到用户输入页面时，清空输入框
         if (m_inputUser) {
@@ -945,18 +967,17 @@ bool MainWindow::performFirstLogin()
         return false;
     }
 
-    // 重新查询用户信息
-    auto record = DatabaseManager::fetchUserByIdAndName(m_tempUserId, m_tempUserName);
-    if (!record) {
-        QMessageBox::critical(this, tr("错误"), tr("无法加载用户信息。"));
-        return false;
+    // 清空密码输入框，准备重新登录
+    if (m_inputNewPass) {
+        m_inputNewPass->clear();
+    }
+    if (m_inputConfirmPass) {
+        m_inputConfirmPass->clear();
+    }
+    if (m_inputPass) {
+        m_inputPass->clear();
     }
 
-    // 创建用户对象
-    m_currentUser = std::make_unique<User>(record->userId, record->realName, record->credit, record->role);
-    updateProfileFromUser();
-
-    QMessageBox::information(this, tr("注册成功"), tr("密码设置成功，账户已激活！"));
     return true;
 }
 
@@ -1077,19 +1098,24 @@ void MainWindow::refreshSlotsFromDatabase()
             // 根据数据库状态设置颜色
             if (slotMap.contains(slotId)) {
                 const auto &gear = slotMap[slotId];
+                qDebug() << "[MainWindow] 槽位" << slotId << "有雨具" << gear.gearId << "状态:" << gear.status;
                 if (gear.status == 1) {
                     // 可借状态 - 绿色
                     slot->setState(SlotItem::State::Available);
+                    qDebug() << "[MainWindow] 槽位" << slotId << "设置为Available(绿色)";
                 } else if (gear.status == 2) {
                     // 已借出 - 灰色（空槽）
                     slot->setState(SlotItem::State::Empty);
+                    qDebug() << "[MainWindow] 槽位" << slotId << "设置为Empty(灰色) - 已借出";
                 } else if (gear.status == 3) {
                     // 损坏 - 红色
                     slot->setState(SlotItem::State::Maintenance);
+                    qDebug() << "[MainWindow] 槽位" << slotId << "设置为Maintenance(红色) - 损坏";
                 }
             } else {
                 // 该槽位没有雨具 - 灰色（空槽）
                 slot->setState(SlotItem::State::Empty);
+                qDebug() << "[MainWindow] 槽位" << slotId << "设置为Empty(灰色) - 无雨具";
             }
         } else {
             // 无法创建雨具对象
@@ -1187,6 +1213,116 @@ void MainWindow::handleBorrowGear(int slotId, int slotIndex)
     QApplication::processEvents(); // 处理事件循环，确保UI立即更新
     
     QMessageBox::information(this, tr("借伞成功"), tr("雨具已成功借出！\n押金：%1 元已扣除").arg(deposit));
+}
+
+void MainWindow::loadMapStations(QWidget *mapContainer)
+{
+    if (!mapContainer) return;
+    
+    // 从JSON配置文件读取站点坐标
+    QFile configFile("map_resources/map_config.json");
+    if (!configFile.open(QIODevice::ReadOnly)) {
+        qWarning() << "[MainWindow] 无法打开地图配置文件";
+        return;
+    }
+    
+    QByteArray data = configFile.readAll();
+    configFile.close();
+    
+    QJsonDocument doc = QJsonDocument::fromJson(data);
+    if (doc.isNull() || !doc.isObject()) {
+        qWarning() << "[MainWindow] 地图配置文件格式错误";
+        return;
+    }
+    
+    QJsonObject config = doc.object();
+    QJsonArray stations = config["stations"].toArray();
+    
+    // 从数据库查询所有站点的库存信息
+    QMap<int, int> stationInventory; // station_id -> 可借雨具数量
+    if (DatabaseManager::init()) {
+        auto allStations = DatabaseManager::fetchAllStations();
+        for (const auto &station : allStations) {
+            auto gears = DatabaseManager::fetchGearsByStation(station.stationId);
+            int availableCount = 0;
+            for (const auto &gear : gears) {
+                if (gear.status == 1) { // 可借状态
+                    availableCount++;
+                }
+            }
+            stationInventory[station.stationId] = availableCount;
+        }
+    }
+    
+    // 绘制站点
+    for (const QJsonValue &value : stations) {
+        QJsonObject stationObj = value.toObject();
+        int stationId = stationObj["station_id"].toInt();
+        QString name = stationObj["name"].toString();
+        double posX = stationObj["pos_x"].toDouble();
+        double posY = stationObj["pos_y"].toDouble();
+        QString description = stationObj["description"].toString();
+        
+        // 创建站点按钮
+        auto *stationBtn = new QPushButton(mapContainer);
+        stationBtn->setFixedSize(24, 24);
+        stationBtn->setCursor(Qt::PointingHandCursor);
+        
+        // 根据库存数量设置颜色
+        int availableCount = stationInventory.value(stationId, 0);
+        QString color;
+        if (availableCount >= 5) {
+            color = "#2ecc71"; // 绿色 - 库存充足
+        } else if (availableCount >= 2) {
+            color = "#f1c40f"; // 黄色 - 库存紧张
+        } else {
+            color = "#e74c3c"; // 红色 - 库存不足
+        }
+        
+        stationBtn->setStyleSheet(QString(
+            "QPushButton {"
+            "  background-color: %1;"
+            "  border: 2px solid white;"
+            "  border-radius: 12px;"
+            "}"
+            "QPushButton:hover {"
+            "  background-color: %1;"
+            "  border: 3px solid #3498db;"
+            "  border-radius: 12px;"
+            "}"
+        ).arg(color));
+        
+        // 设置工具提示
+        stationBtn->setToolTip(QString("%1\n可借雨具：%2 把\n%3")
+            .arg(name).arg(availableCount).arg(description));
+        
+        // 点击站点时显示详细信息
+        connect(stationBtn, &QPushButton::clicked, this, [this, stationId, name, availableCount, description]() {
+            QString msg = QString("<h3>%1</h3>"
+                "<p><b>可借雨具数量：</b>%2 把</p>"
+                "<p><b>站点说明：</b>%3</p>")
+                .arg(name).arg(availableCount).arg(description);
+            QMessageBox::information(this, tr("站点信息"), msg);
+        });
+        
+        // 添加站点名称标签
+        auto *nameLabel = new QLabel(name, mapContainer);
+        nameLabel->setStyleSheet("font-size: 11px; font-weight: 600; color: #2c3e50; background-color: rgba(255, 255, 255, 200); padding: 2px 6px; border-radius: 3px;");
+        nameLabel->setAlignment(Qt::AlignCenter);
+        nameLabel->adjustSize();
+        
+        // 使用定时器延迟设置位置（确保mapContainer已经完成布局）
+        QTimer::singleShot(100, this, [mapContainer, stationBtn, nameLabel, posX, posY]() {
+            int containerWidth = mapContainer->width();
+            int containerHeight = mapContainer->height();
+            
+            int x = static_cast<int>(containerWidth * posX) - 12; // 减去按钮半径
+            int y = static_cast<int>(containerHeight * posY) - 12;
+            
+            stationBtn->move(x, y);
+            nameLabel->move(x - nameLabel->width() / 2 + 12, y + 28); // 放在按钮下方
+        });
+    }
 }
 
 void MainWindow::handleReturnGear(int slotId, int slotIndex)
