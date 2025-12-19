@@ -1353,21 +1353,16 @@ void MainWindow::handleReturnGear(int slotId, int slotIndex)
     QString gearId = currentBorrow->gearId;
     
     // 检查该槽位是否为空（槽位为空表示可以还伞）
-    // 注意：fetchGearsByStation只返回该站点中存在的雨具，如果槽位是空的，不会出现在结果中
+    // 注意：fetchGearsByStation只返回该站点中存在的雨具（station_id匹配），如果槽位是空的，不会出现在结果中
+    // 但为了更安全，我们直接查询数据库检查槽位是否被占用
     auto gears = DatabaseManager::fetchGearsByStation(m_currentStationId);
     bool slotOccupied = false;
     for (const auto &gear : gears) {
         if (gear.slotId == slotId) {
-            // 如果槽位有雨具，且状态为可借（status==1），说明槽位被占用
-            if (gear.status == 1) {
-                slotOccupied = true;
-                break;
-            }
-            // 如果状态是其他（损坏等），也认为被占用
-            if (gear.status == 3) {
-                slotOccupied = true;
-                break;
-            }
+            // 如果槽位有雨具，无论状态如何都认为被占用（可借、损坏等都不能还伞）
+            slotOccupied = true;
+            qDebug() << "[MainWindow] 槽位" << slotId << "已被占用，雨具ID:" << gear.gearId << "状态:" << gear.status;
+            break;
         }
     }
     

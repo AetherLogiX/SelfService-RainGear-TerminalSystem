@@ -478,10 +478,11 @@ std::pair<bool, double> DatabaseManager::returnGear(const QString &userId, const
         }
 
         // 4. 获取雨具押金（需要根据type_id计算）
+        // 注意：借出时雨具的station_id和slot_id为NULL，但type_id仍然存在
         query.prepare(QStringLiteral("SELECT type_id FROM raingear WHERE gear_id = :gid LIMIT 1"));
         query.bindValue(":gid", gearId);
         if (!query.exec() || !query.next()) {
-            qWarning() << "[DB] 查询雨具类型失败";
+            qWarning() << "[DB] 查询雨具类型失败，gear_id:" << gearId;
             db.rollback();
             return {false, 0.0};
         }
@@ -494,6 +495,7 @@ std::pair<bool, double> DatabaseManager::returnGear(const QString &userId, const
             case 4: deposit = 25.0; break; // 雨衣
             default: deposit = 20.0; break;
         }
+        qDebug() << "[DB] 雨具类型:" << typeId << "押金:" << deposit;
 
         // 5. 更新雨具状态（设为可借，设置station_id和slot_id）
         query.prepare(QStringLiteral(
