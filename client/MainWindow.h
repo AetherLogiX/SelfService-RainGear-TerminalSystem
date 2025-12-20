@@ -92,6 +92,7 @@ private:
     void onStationChanged(int index);        // 站点选择改变时的处理
     void refreshSlotsFromDatabase();         // 从数据库刷新槽位状态
     void loadMapStations(QWidget *mapContainer); // 从数据库加载站点坐标并绘制
+    QWidget *m_mapContainer { nullptr }; // 地图容器引用
 
     // Profile mock labels
     QLabel *m_profileName { nullptr };
@@ -100,5 +101,8 @@ private:
     QLabel *m_profileTitle { nullptr };
 
     QTextBrowser *m_instructionViewer { nullptr };
+    
+    // 实时同步定时器（当在借还页面时定时刷新）
+    QTimer *m_syncTimer { nullptr };
 };
 
