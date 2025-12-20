@@ -112,8 +112,8 @@ target_link_libraries(${PROJECT_NAME}_Admin
 
 # Windows特定配置
 if(WIN32)
-    # MySQL DLL路径（使用桌面dll文件夹的配套文件）
-    set(DLL_DIR "C:/Users/hdcqW/Desktop/dll")
+    # MySQL DLL路径（使用项目文件夹的dll目录）
+    set(DLL_DIR "${CMAKE_SOURCE_DIR}/dll")
     set(MYSQL_LIB_DIR "C:/Program Files/MySQL/MySQL Server 8.0/lib")
     set(MYSQL_DLL "${DLL_DIR}/libmysql.dll")
     set(MYSQL_SSL_DLL "${DLL_DIR}/libssl-3-x64.dll")
@@ -169,8 +169,7 @@ if(WIN32)
         COMMENT "复制MySQL的libcrypto到管理员后台输出目录"
     )
     
-    # 从桌面dll文件夹复制所需的DLL
-    set(DLL_DIR "C:/Users/hdcqW/Desktop/dll")
+    # 从项目dll文件夹复制所需的DLL
     if(EXISTS "${DLL_DIR}")
         file(GLOB DLL_FILES "${DLL_DIR}/*.dll")
         foreach(DLL_FILE ${DLL_FILES})
