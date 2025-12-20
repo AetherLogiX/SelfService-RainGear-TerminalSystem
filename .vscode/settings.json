@@ -1,0 +1,29 @@
+{
+    "files.associations": {
+        "*.h": "cpp",
+        "*.hpp": "cpp",
+        "*.cpp": "cpp",
+        "*.qrc": "xml",
+        "*.ui": "xml"
+    },
+    "cmake.configureOnOpen": true,
+    "cmake.buildDirectory": "${workspaceFolder}/build",
+    "cmake.generator": "MinGW Makefiles",
+    "cmake.configureSettings": {
+        "CMAKE_PREFIX_PATH": "E:/Qt/6.5.3/mingw_64",
+        "CMAKE_BUILD_TYPE": "Debug"
+    },
+    "cmake.sourceDirectory": "${workspaceFolder}",
+    "C_Cpp.default.includePath": [
+        "${workspaceFolder}/**",
+        "${workspaceFolder}/Model",
+        "${workspaceFolder}/Control",
+        "${workspaceFolder}/View",
+        "E:/Qt/6.5.3/mingw_64/include/**"
+    ],
+    "C_Cpp.default.compilerPath": "E:/Qt/Tools/mingw1310_64/bin/g++.exe",
+    "C_Cpp.default.cStandard": "c17",
+    "C_Cpp.default.cppStandard": "c++17",
+    "C_Cpp.default.intelliSenseMode": "gcc-x64",
+    "C_Cpp.errorSquiggles": "enabled"
+}

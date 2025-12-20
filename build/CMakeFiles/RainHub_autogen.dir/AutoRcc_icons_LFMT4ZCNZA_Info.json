@@ -1,0 +1,28 @@
+{
+	"BUILD_DIR" : "C:/Users/hdcqW/Desktop/Rainhub/build/RainHub_autogen",
+	"CMAKE_BINARY_DIR" : "C:/Users/hdcqW/Desktop/Rainhub/build",
+	"CMAKE_CURRENT_BINARY_DIR" : "C:/Users/hdcqW/Desktop/Rainhub/build",
+	"CMAKE_CURRENT_SOURCE_DIR" : "C:/Users/hdcqW/Desktop/Rainhub",
+	"CMAKE_SOURCE_DIR" : "C:/Users/hdcqW/Desktop/Rainhub",
+	"CROSS_CONFIG" : false,
+	"GENERATOR" : "MinGW Makefiles",
+	"INCLUDE_DIR" : "C:/Users/hdcqW/Desktop/Rainhub/build/RainHub_autogen/include",
+	"INPUTS" : 
+	[
+		"C:/Users/hdcqW/Desktop/Rainhub/rgear_icons/plastic_unbrella.png",
+		"C:/Users/hdcqW/Desktop/Rainhub/rgear_icons/highquality_unbrella.png",
+		"C:/Users/hdcqW/Desktop/Rainhub/rgear_icons/sunshade_umbrella.png",
+		"C:/Users/hdcqW/Desktop/Rainhub/rgear_icons/raincoat.png"
+	],
+	"LOCK_FILE" : "C:/Users/hdcqW/Desktop/Rainhub/build/CMakeFiles/RainHub_autogen.dir/AutoRcc_icons_LFMT4ZCNZA_Lock.lock",
+	"MULTI_CONFIG" : false,
+	"OPTIONS" : [ "--no-zstd", "-name", "icons" ],
+	"OUTPUT_CHECKSUM" : "LFMT4ZCNZA",
+	"OUTPUT_NAME" : "qrc_icons.cpp",
+	"RCC_EXECUTABLE" : "E:/Qt/6.9.3/mingw_64/bin/rcc.exe",
+	"RCC_LIST_OPTIONS" : [ "--list" ],
+	"SETTINGS_FILE" : "C:/Users/hdcqW/Desktop/Rainhub/build/CMakeFiles/RainHub_autogen.dir/AutoRcc_icons_LFMT4ZCNZA_Used.txt",
+	"SOURCE" : "C:/Users/hdcqW/Desktop/Rainhub/rgear_icons/icons.qrc",
+	"USE_BETTER_GRAPH" : true,
+	"VERBOSITY" : 0
+}

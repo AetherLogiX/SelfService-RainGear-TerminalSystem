@@ -1,0 +1,9 @@
+<RCC>
+    <qresource prefix="/rgear_icons">
+        <file>plastic_unbrella.png</file>
+        <file>highquality_unbrella.png</file>
+        <file>sunshade_umbrella.png</file>
+        <file>raincoat.png</file>
+    </qresource>
+</RCC>
+

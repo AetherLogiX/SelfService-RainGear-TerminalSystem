@@ -1,0 +1,34 @@
+{
+    "configurations": [
+        {
+            "name": "Win32",
+            "includePath": [
+                "${workspaceFolder}/**",
+                "E:/Qt/6.5.3/mingw_64/include/**",
+                "E:/Qt/6.5.3/mingw_64/include/QtCore",
+                "E:/Qt/6.5.3/mingw_64/include/QtWidgets",
+                "E:/Qt/6.5.3/mingw_64/include/QtSql",
+                "E:/Qt/6.5.3/mingw_64/include/QtNetwork",
+                "E:/Qt/6.5.3/mingw_64/include/QtGui"
+            ],
+            "defines": [
+                "_DEBUG",
+                "UNICODE",
+                "_UNICODE",
+                "QT_DEPRECATED_WARNINGS"
+            ],
+            "windowsSdkVersion": "10.0.26100.0",
+            "compilerPath": "E:/Qt/Tools/mingw1310_64/bin/g++.exe",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "gcc-x64",
+            "compilerArgs": [
+                "-Wall",
+                "-Wextra"
+            ],
+            "configurationProvider": "ms-vscode.cmake-tools"
+        }
+    ],
+    "version": 4
+}
+
