@@ -40,7 +40,6 @@ set(SOURCES
     Model/User.cpp
     Model/Stationlocal.cpp
     Model/StationUtils.cpp
-    Control/SystemManger.cpp
     Control/DatabaseManager.cpp
 )
 
@@ -48,6 +47,7 @@ set(SOURCES
 set(HEADERS
     client/MainWindow.h
     client/SlotItem.h
+    client/Styles.h
     Model/User.h
     Model/RainGear.hpp
     Model/RainGear_subclasses.hpp
@@ -56,7 +56,6 @@ set(HEADERS
     Model/Stationlocal.h
     Model/StationUtils.h
     Control/DBHelper.h
-    Control/RainGearDAO.hpp
     Control/DatabaseManager.h
 )
 
@@ -81,6 +80,7 @@ target_link_libraries(${PROJECT_NAME}
 if(WIN32)
     # MySQL库路径
     set(MYSQL_LIB_DIR "C:/Program Files/MySQL/MySQL Server 8.0/lib")
+    set(MYSQL_BIN_DIR "C:/Program Files/MySQL/MySQL Server 8.0/bin")
     set(MYSQL_DLL "${MYSQL_LIB_DIR}/libmysql.dll")
     
     # 链接MySQL库
@@ -95,9 +95,27 @@ if(WIN32)
         COMMENT "复制MySQL DLL到输出目录"
     )
     
-    # 从桌面dll文件夹复制所需的DLL
+    # 复制SSL相关DLL（qsqlmysql.dll需要）
+    set(SSL_DLLS
+        "${MYSQL_BIN_DIR}/libcrypto-3-x64.dll"
+        "${MYSQL_BIN_DIR}/libssl-3-x64.dll"
+    )
+    foreach(SSL_DLL ${SSL_DLLS})
+        if(EXISTS "${SSL_DLL}")
+            get_filename_component(SSL_DLL_NAME ${SSL_DLL} NAME)
+            add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${SSL_DLL}"
+                $<TARGET_FILE_DIR:${PROJECT_NAME}>
+                COMMENT "复制SSL DLL ${SSL_DLL_NAME} 到输出目录"
+            )
+        endif()
+    endforeach()
+    
+    # 从桌面dll文件夹复制所需的DLL（原始配置）
     set(DLL_DIR "C:/Users/hdcqW/Desktop/dll")
     if(EXISTS "${DLL_DIR}")
+        # 复制主要DLL
         file(GLOB DLL_FILES "${DLL_DIR}/*.dll")
         foreach(DLL_FILE ${DLL_FILES})
             get_filename_component(DLL_NAME ${DLL_FILE} NAME)
@@ -108,6 +126,20 @@ if(WIN32)
                 COMMENT "复制 ${DLL_NAME} 到输出目录"
             )
         endforeach()
+        
+        # 复制sqldrivers目录
+        if(EXISTS "${DLL_DIR}/sqldrivers")
+            add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E make_directory
+                $<TARGET_FILE_DIR:${PROJECT_NAME}>/sqldrivers
+            )
+            add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+                COMMAND ${CMAKE_COMMAND} -E copy_if_different
+                "${DLL_DIR}/sqldrivers/qsqlmysql.dll"
+                $<TARGET_FILE_DIR:${PROJECT_NAME}>/sqldrivers
+                COMMENT "复制qsqlmysql.dll到sqldrivers目录"
+            )
+        endif()
     endif()
     
     # 复制MinGW运行时库（如果使用MinGW编译器）
