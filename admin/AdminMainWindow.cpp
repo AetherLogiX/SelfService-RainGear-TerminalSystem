@@ -82,23 +82,23 @@ QWidget* AdminMainWindow::createLoginPage()
     form->setFormAlignment(Qt::AlignHCenter);
     form->setVerticalSpacing(16);
     
-    auto *inputUserId = new QLineEdit(page);
-    auto *inputPassword = new QLineEdit(page);
-    inputUserId->setPlaceholderText(tr("请输入管理员账号"));
-    inputPassword->setPlaceholderText(tr("请输入密码"));
-    inputPassword->setEchoMode(QLineEdit::Password);
-    inputUserId->setFixedWidth(300);
-    inputPassword->setFixedWidth(300);
+    m_loginUserIdInput = new QLineEdit(page);
+    m_loginPasswordInput = new QLineEdit(page);
+    m_loginUserIdInput->setPlaceholderText(tr("请输入管理员账号"));
+    m_loginPasswordInput->setPlaceholderText(tr("请输入密码"));
+    m_loginPasswordInput->setEchoMode(QLineEdit::Password);
+    m_loginUserIdInput->setFixedWidth(300);
+    m_loginPasswordInput->setFixedWidth(300);
     
-    form->addRow(tr("管理员账号："), inputUserId);
-    form->addRow(tr("密码："), inputPassword);
+    form->addRow(tr("管理员账号："), m_loginUserIdInput);
+    form->addRow(tr("密码："), m_loginPasswordInput);
 
     auto *btnLogin = new QPushButton(tr("登录"), page);
     btnLogin->setFixedWidth(160);
     btnLogin->setStyleSheet("font-size:16px; padding:10px; background-color: #3498db; color: white;");
-    connect(btnLogin, &QPushButton::clicked, this, [this, inputUserId, inputPassword] {
-        const QString userId = inputUserId->text().trimmed();
-        const QString password = inputPassword->text();
+    connect(btnLogin, &QPushButton::clicked, this, [this] {
+        const QString userId = m_loginUserIdInput->text().trimmed();
+        const QString password = m_loginPasswordInput->text();
 
         if (userId.isEmpty() || password.isEmpty()) {
             QMessageBox::warning(this, tr("提示"), tr("请输入管理员账号和密码"));
@@ -111,7 +111,7 @@ QWidget* AdminMainWindow::createLoginPage()
         }
 
         if (performAdminLogin(userId, password)) {
-            inputPassword->clear();
+            m_loginPasswordInput->clear();
             switchPage(Page::Dashboard);
             m_refreshTimer->start(3000); // 开始定时刷新（3秒一次）
         }
@@ -508,6 +508,11 @@ void AdminMainWindow::handleLogout()
     m_refreshTimer->stop();
     m_currentAdminId.clear();
     m_currentAdminName.clear();
+    
+    // 清空登录输入框
+    if (m_loginUserIdInput) m_loginUserIdInput->clear();
+    if (m_loginPasswordInput) m_loginPasswordInput->clear();
+    
     switchPage(Page::Login);
 }
 

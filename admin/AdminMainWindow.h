@@ -72,6 +72,10 @@ private:
     // 管理员信息标签
     QLabel *m_adminLabel { nullptr };
     
+    // 登录页面输入框
+    QLineEdit *m_loginUserIdInput { nullptr };
+    QLineEdit *m_loginPasswordInput { nullptr };
+    
     // 定时刷新（实现实时同步）
     QTimer *m_refreshTimer { nullptr };
     
