@@ -17,7 +17,7 @@ public:
         QSqlDatabase db = QSqlDatabase::addDatabase("QMYSQL", connectionName);
         db.setHostName("127.0.0.1");
         db.setPort(3306);
-        db.setDatabaseName("rainhub_db");
+        db.setDatabaseName("rainhub_db_2");
         db.setUserName("root");
         db.setPassword("root"); 
         
