@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "SlotItem.h"
+#include "Styles.h"
 #include "Model/RainGearFactory.h"
 #include "Model/RainGear_subclasses.hpp"
 
@@ -24,6 +25,7 @@
 #include <QJsonObject>
 #include <QJsonArray>
 #include <QTimer>
+#include <QGraphicsDropShadowEffect>
 #include <algorithm>
 
 MainWindow::MainWindow(QWidget *parent)
@@ -31,8 +33,6 @@ MainWindow::MainWindow(QWidget *parent)
 {
     setupUi();
     switchPage(Page::Welcome);
-    setWindowTitle("RainHub Client");
-    resize(900, 700);
 }
 
 void MainWindow::setupUi()
@@ -62,25 +62,50 @@ void MainWindow::setupUi()
 QWidget* MainWindow::createWelcomePage()
 {
     auto *page = new QWidget(this);
+    page->setObjectName("welcomePage");
     auto *layout = new QVBoxLayout(page);
     layout->setAlignment(Qt::AlignCenter);
+    layout->setSpacing(16);
 
-    auto *title = new QLabel(tr("NUIST智能自助雨具系统"), page);
-    title->setStyleSheet("font-size:28px; font-weight:700;");
-    auto *subtitle = new QLabel(tr("欢迎您的使用"), page);
-    subtitle->setStyleSheet("font-size:18px; color:#555;");
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    card->setFixedSize(480, 420);
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setAlignment(Qt::AlignCenter);
+    cardLayout->setSpacing(20);
+    cardLayout->setContentsMargins(40, 50, 40, 50);
 
-    auto *btnStart = new QPushButton(tr("开始使用"), page);
-    btnStart->setFixedWidth(180);
-    btnStart->setStyleSheet("padding:12px 18px; font-size:16px;");
+    // 图标
+    auto *iconLabel = new QLabel("☂️", card);
+    iconLabel->setStyleSheet(Styles::Labels::welcomeIcon());
+    iconLabel->setAlignment(Qt::AlignCenter);
+
+    // 主标题
+    auto *title = new QLabel(tr("NUIST 智能雨具系统"), card);
+    title->setStyleSheet(Styles::Labels::title());
+    title->setAlignment(Qt::AlignCenter);
+
+    // 副标题
+    auto *subtitle = new QLabel(tr("校园智能共享雨具借还平台"), card);
+    subtitle->setStyleSheet(Styles::Labels::subtitle());
+    subtitle->setAlignment(Qt::AlignCenter);
+
+    // 开始按钮
+    auto *btnStart = new QPushButton(tr("开始使用"), card);
+    btnStart->setStyleSheet(Styles::Buttons::primaryLarge());
+    btnStart->setCursor(Qt::PointingHandCursor);
     connect(btnStart, &QPushButton::clicked, this, [this] {
         switchPage(Page::CardRead);
     });
 
-    layout->addWidget(title, 0, Qt::AlignCenter);
-    layout->addWidget(subtitle, 0, Qt::AlignCenter);
-    layout->addSpacing(20);
-    layout->addWidget(btnStart, 0, Qt::AlignCenter);
+    cardLayout->addWidget(iconLabel, 0, Qt::AlignCenter);
+    cardLayout->addWidget(title, 0, Qt::AlignCenter);
+    cardLayout->addWidget(subtitle, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(20);
+    cardLayout->addWidget(btnStart, 0, Qt::AlignCenter);
+
+    layout->addWidget(card, 0, Qt::AlignCenter);
     return page;
 }
 
@@ -89,43 +114,57 @@ QWidget* MainWindow::createCardReadPage()
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
     layout->setAlignment(Qt::AlignCenter);
-    layout->setSpacing(20);
 
-    auto *iconLabel = new QLabel(page);
-    iconLabel->setText("📱");
-    iconLabel->setStyleSheet("font-size:80px;");
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    card->setFixedSize(500, 450);
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setAlignment(Qt::AlignCenter);
+    cardLayout->setSpacing(20);
+    cardLayout->setContentsMargins(40, 40, 40, 40);
+
+    auto *iconLabel = new QLabel("💳", card);
+    iconLabel->setStyleSheet(Styles::Labels::welcomeIcon());
     iconLabel->setAlignment(Qt::AlignCenter);
 
-    auto *tip = new QLabel(tr("请将您的一卡通放置在刷卡处"), page);
-    tip->setStyleSheet("font-size:24px; font-weight:600; color:#2c3e50;");
+    auto *tip = new QLabel(tr("请将您的一卡通放置在刷卡处"), card);
+    tip->setStyleSheet(Styles::Labels::pageTitle());
     tip->setAlignment(Qt::AlignCenter);
 
-    auto *subtip = new QLabel(tr("系统将自动识别您的学号和姓名"), page);
-    subtip->setStyleSheet("font-size:16px; color:#7f8c8d;");
+    auto *subtip = new QLabel(tr("系统将自动识别您的学号和姓名"), card);
+    subtip->setStyleSheet(Styles::Labels::subtitle());
     subtip->setAlignment(Qt::AlignCenter);
 
-    auto *btnConfirm = new QPushButton(tr("确定"), page);
-    btnConfirm->setFixedSize(200, 50);
-    btnConfirm->setStyleSheet("font-size:18px; padding:10px;");
+    // 模拟刷卡动画指示
+    auto *hintLabel = new QLabel(tr("（演示模式：点击确定手动输入信息）"), card);
+    hintLabel->setStyleSheet(Styles::Labels::hint());
+    hintLabel->setAlignment(Qt::AlignCenter);
+
+    auto *btnConfirm = new QPushButton(tr("确定"), card);
+    btnConfirm->setStyleSheet(Styles::Buttons::primary());
+    btnConfirm->setCursor(Qt::PointingHandCursor);
     connect(btnConfirm, &QPushButton::clicked, this, [this] {
         switchPage(Page::UserInput);
     });
 
-    auto *btnBack = new QPushButton(tr("返回"), page);
-    btnBack->setFixedWidth(120);
+    auto *btnBack = new QPushButton(tr("返回首页"), card);
+    btnBack->setStyleSheet(Styles::Buttons::back());
+    btnBack->setCursor(Qt::PointingHandCursor);
     connect(btnBack, &QPushButton::clicked, this, [this] {
         switchPage(Page::Welcome);
     });
 
-    layout->addStretch();
-    layout->addWidget(iconLabel, 0, Qt::AlignCenter);
-    layout->addWidget(tip, 0, Qt::AlignCenter);
-    layout->addWidget(subtip, 0, Qt::AlignCenter);
-    layout->addSpacing(30);
-    layout->addWidget(btnConfirm, 0, Qt::AlignCenter);
-    layout->addSpacing(10);
-    layout->addWidget(btnBack, 0, Qt::AlignCenter);
-    layout->addStretch();
+    cardLayout->addWidget(iconLabel, 0, Qt::AlignCenter);
+    cardLayout->addWidget(tip, 0, Qt::AlignCenter);
+    cardLayout->addWidget(subtip, 0, Qt::AlignCenter);
+    cardLayout->addWidget(hintLabel, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(20);
+    cardLayout->addWidget(btnConfirm, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(8);
+    cardLayout->addWidget(btnBack, 0, Qt::AlignCenter);
+
+    layout->addWidget(card, 0, Qt::AlignCenter);
     return page;
 }
 
@@ -133,45 +172,43 @@ QWidget* MainWindow::createUserInputPage()
 {
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
-    layout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
-    layout->setContentsMargins(40, 40, 40, 40);
-    layout->setSpacing(20);
+    layout->setAlignment(Qt::AlignCenter);
 
-    auto *title = new QLabel(tr("请输入您的信息"), page);
-    title->setStyleSheet("font-size:22px; font-weight:700;");
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    card->setFixedSize(480, 450);
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setAlignment(Qt::AlignCenter);
+    cardLayout->setSpacing(20);
+    cardLayout->setContentsMargins(50, 40, 50, 40);
+
+    auto *title = new QLabel(tr("请输入您的信息"), card);
+    title->setStyleSheet(Styles::Labels::pageTitle());
     title->setAlignment(Qt::AlignCenter);
 
-    auto *subtitle = new QLabel(tr("（软件模拟：请手动输入学号/工号和姓名）"), page);
-    subtitle->setStyleSheet("font-size:14px; color:#7f8c8d;");
+    auto *subtitle = new QLabel(tr("演示模式：请手动输入学号/工号和姓名"), card);
+    subtitle->setStyleSheet(Styles::Labels::hint());
     subtitle->setAlignment(Qt::AlignCenter);
 
-    auto *form = new QFormLayout();
-    form->setLabelAlignment(Qt::AlignRight);
-    form->setFormAlignment(Qt::AlignHCenter);
-    form->setVerticalSpacing(16);
-    
-    // 使用成员变量保存输入框指针，以便退出登录时清空
+    // 使用成员变量保存输入框指针
     if (!m_inputUser) {
-        m_inputUser = new QLineEdit(page);
+        m_inputUser = new QLineEdit(card);
     }
     if (!m_inputName) {
-        m_inputName = new QLineEdit(page);
+        m_inputName = new QLineEdit(card);
     }
     m_inputUser->setPlaceholderText(tr("请输入学号/工号"));
     m_inputName->setPlaceholderText(tr("请输入姓名"));
-    m_inputUser->setFixedWidth(300);
-    m_inputName->setFixedWidth(300);
-    m_inputUser->clear(); // 每次显示页面时清空
-    m_inputName->clear(); // 每次显示页面时清空
-    
-    form->addRow(tr("学号/工号："), m_inputUser);
-    form->addRow(tr("姓名："), m_inputName);
+    m_inputUser->setFixedWidth(320);
+    m_inputName->setFixedWidth(320);
+    m_inputUser->clear();
+    m_inputName->clear();
 
-    auto *btnSubmit = new QPushButton(tr("提交"), page);
-    btnSubmit->setFixedWidth(160);
-    btnSubmit->setStyleSheet("font-size:16px; padding:10px;");
+    auto *btnSubmit = new QPushButton(tr("提交验证"), card);
+    btnSubmit->setStyleSheet(Styles::Buttons::primary());
+    btnSubmit->setCursor(Qt::PointingHandCursor);
     connect(btnSubmit, &QPushButton::clicked, this, [this] {
-        // 直接从输入框获取值
         const QString userId = m_inputUser->text().trimmed();
         const QString realName = m_inputName->text().trimmed();
 
@@ -187,7 +224,6 @@ QWidget* MainWindow::createUserInputPage()
 
         qDebug() << "[UserInput] 查询用户:" << userId << realName;
 
-        // 查询用户是否存在
         auto record = DatabaseManager::fetchUserByIdAndName(userId, realName);
         if (!record) {
             QMessageBox::warning(this, tr("用户不存在"), tr("未找到该学号/工号和姓名对应的用户，请检查输入。"));
@@ -196,35 +232,37 @@ QWidget* MainWindow::createUserInputPage()
 
         qDebug() << "[UserInput] 找到用户, is_active:" << record->isActive;
 
-        // 保存临时用户信息
         m_tempUserId = userId;
         m_tempUserName = realName;
         m_currentRole = (record->role == 1) ? Role::Staff : Role::Student;
 
-        // 根据is_active判断是否首次登录
         if (!record->isActive) {
-            // 首次登录，跳转到设置密码页面
             qDebug() << "[UserInput] 首次登录，跳转到设置密码页面";
             switchPage(Page::FirstLogin);
         } else {
-            // 非首次登录，跳转到密码登录页面
             qDebug() << "[UserInput] 非首次登录，跳转到密码登录页面";
             switchPage(Page::Login);
         }
     });
 
-    auto *btnBack = new QPushButton(tr("返回"), page);
-    btnBack->setFixedWidth(120);
+    auto *btnBack = new QPushButton(tr("返回"), card);
+    btnBack->setStyleSheet(Styles::Buttons::back());
+    btnBack->setCursor(Qt::PointingHandCursor);
     connect(btnBack, &QPushButton::clicked, this, [this] {
         switchPage(Page::CardRead);
     });
 
-    layout->addWidget(title, 0, Qt::AlignCenter);
-    layout->addWidget(subtitle, 0, Qt::AlignCenter);
-    layout->addSpacing(20);
-    layout->addLayout(form);
-    layout->addWidget(btnSubmit, 0, Qt::AlignCenter);
-    layout->addWidget(btnBack, 0, Qt::AlignCenter);
+    cardLayout->addWidget(title, 0, Qt::AlignCenter);
+    cardLayout->addWidget(subtitle, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(16);
+    cardLayout->addWidget(m_inputUser, 0, Qt::AlignCenter);
+    cardLayout->addWidget(m_inputName, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(20);
+    cardLayout->addWidget(btnSubmit, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(8);
+    cardLayout->addWidget(btnBack, 0, Qt::AlignCenter);
+
+    layout->addWidget(card, 0, Qt::AlignCenter);
     return page;
 }
 
@@ -232,75 +270,73 @@ QWidget* MainWindow::createFirstLoginPage()
 {
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
-    layout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
-    layout->setContentsMargins(40, 40, 40, 40);
-    layout->setSpacing(20);
+    layout->setAlignment(Qt::AlignCenter);
 
-    auto *title = new QLabel(tr("首次登录 - 设置密码"), page);
-    title->setStyleSheet("font-size:22px; font-weight:700;");
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    card->setFixedSize(480, 520);
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setAlignment(Qt::AlignCenter);
+    cardLayout->setSpacing(16);
+    cardLayout->setContentsMargins(50, 40, 50, 40);
+
+    auto *title = new QLabel(tr("🎉 首次登录"), card);
+    title->setStyleSheet(Styles::Labels::pageTitle());
     title->setAlignment(Qt::AlignCenter);
 
-    auto *subtitle = new QLabel(tr("欢迎！请设置您的登录密码"), page);
-    subtitle->setStyleSheet("font-size:14px; color:#7f8c8d;");
+    auto *subtitle = new QLabel(tr("欢迎加入！请设置您的登录密码"), card);
+    subtitle->setStyleSheet(Styles::Labels::subtitle());
     subtitle->setAlignment(Qt::AlignCenter);
 
-    // 显示用户信息（只读）
-    auto *infoLayout = new QVBoxLayout();
-    infoLayout->setAlignment(Qt::AlignHCenter);
-    infoLayout->setSpacing(8);
-    
-    m_firstLoginUserInfoLabel = new QLabel(page);
-    m_firstLoginUserInfoLabel->setStyleSheet("font-size:16px; color:#34495e;");
+    // 用户信息显示区
+    m_firstLoginUserInfoLabel = new QLabel(card);
+    m_firstLoginUserInfoLabel->setStyleSheet(Styles::Labels::info());
     m_firstLoginUserInfoLabel->setAlignment(Qt::AlignCenter);
-    // 初始化显示用户信息
-    QString infoText = tr("学号/工号：%1\n姓名：%2")
+    QString infoText = tr("账号：%1 | 姓名：%2")
         .arg(m_tempUserId.isEmpty() ? tr("未知") : m_tempUserId)
         .arg(m_tempUserName.isEmpty() ? tr("未知") : m_tempUserName);
     m_firstLoginUserInfoLabel->setText(infoText);
-    infoLayout->addWidget(m_firstLoginUserInfoLabel);
-
-    auto *form = new QFormLayout();
-    form->setLabelAlignment(Qt::AlignRight);
-    form->setFormAlignment(Qt::AlignHCenter);
-    form->setVerticalSpacing(16);
     
-    m_inputNewPass = new QLineEdit(page);
-    m_inputConfirmPass = new QLineEdit(page);
-    m_inputNewPass->setPlaceholderText(tr("请输入新密码"));
-    m_inputConfirmPass->setPlaceholderText(tr("请再次输入新密码"));
+    m_inputNewPass = new QLineEdit(card);
+    m_inputConfirmPass = new QLineEdit(card);
+    m_inputNewPass->setPlaceholderText(tr("请输入新密码（至少6位）"));
+    m_inputConfirmPass->setPlaceholderText(tr("请再次确认密码"));
     m_inputNewPass->setEchoMode(QLineEdit::Password);
     m_inputConfirmPass->setEchoMode(QLineEdit::Password);
-    m_inputNewPass->setFixedWidth(300);
-    m_inputConfirmPass->setFixedWidth(300);
-    
-    form->addRow(tr("新密码："), m_inputNewPass);
-    form->addRow(tr("确认密码："), m_inputConfirmPass);
+    m_inputNewPass->setFixedWidth(320);
+    m_inputConfirmPass->setFixedWidth(320);
 
-    auto *btnSubmit = new QPushButton(tr("完成注册"), page);
-    btnSubmit->setFixedWidth(160);
-    btnSubmit->setStyleSheet("font-size:16px; padding:10px;");
+    auto *btnSubmit = new QPushButton(tr("完成注册"), card);
+    btnSubmit->setStyleSheet(Styles::Buttons::accent());
+    btnSubmit->setCursor(Qt::PointingHandCursor);
     connect(btnSubmit, &QPushButton::clicked, this, [this] {
         if (performFirstLogin()) {
-            // 注册成功后，跳转到登录页面，让用户重新输入密码登录
             QMessageBox::information(this, tr("注册成功"), tr("密码设置成功！请使用新密码登录。"));
             switchPage(Page::Login);
         }
     });
 
-    auto *btnBack = new QPushButton(tr("返回"), page);
-    btnBack->setFixedWidth(120);
+    auto *btnBack = new QPushButton(tr("返回"), card);
+    btnBack->setStyleSheet(Styles::Buttons::back());
+    btnBack->setCursor(Qt::PointingHandCursor);
     connect(btnBack, &QPushButton::clicked, this, [this] {
         switchPage(Page::UserInput);
     });
 
-    layout->addWidget(title, 0, Qt::AlignCenter);
-    layout->addWidget(subtitle, 0, Qt::AlignCenter);
-    layout->addSpacing(10);
-    layout->addLayout(infoLayout);
-    layout->addSpacing(10);
-    layout->addLayout(form);
-    layout->addWidget(btnSubmit, 0, Qt::AlignCenter);
-    layout->addWidget(btnBack, 0, Qt::AlignCenter);
+    cardLayout->addWidget(title, 0, Qt::AlignCenter);
+    cardLayout->addWidget(subtitle, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(8);
+    cardLayout->addWidget(m_firstLoginUserInfoLabel, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(12);
+    cardLayout->addWidget(m_inputNewPass, 0, Qt::AlignCenter);
+    cardLayout->addWidget(m_inputConfirmPass, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(20);
+    cardLayout->addWidget(btnSubmit, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(8);
+    cardLayout->addWidget(btnBack, 0, Qt::AlignCenter);
+
+    layout->addWidget(card, 0, Qt::AlignCenter);
     return page;
 }
 
@@ -308,48 +344,40 @@ QWidget* MainWindow::createLoginPage()
 {
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
-    layout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
-    layout->setContentsMargins(40, 40, 40, 40);
-    layout->setSpacing(16);
+    layout->setAlignment(Qt::AlignCenter);
 
-    m_loginRoleLabel = new QLabel(tr("请输入密码"), page);
-    m_loginRoleLabel->setStyleSheet("font-size:18px; font-weight:600;");
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    card->setFixedSize(480, 480);
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setAlignment(Qt::AlignCenter);
+    cardLayout->setSpacing(16);
+    cardLayout->setContentsMargins(50, 40, 50, 40);
+
+    m_loginRoleLabel = new QLabel(tr("🔐 账号登录"), card);
+    m_loginRoleLabel->setStyleSheet(Styles::Labels::pageTitle());
     m_loginRoleLabel->setAlignment(Qt::AlignCenter);
 
-    // 显示用户信息（只读）
-    auto *infoLayout = new QVBoxLayout();
-    infoLayout->setAlignment(Qt::AlignHCenter);
-    infoLayout->setSpacing(8);
-    
-    auto *userInfoLabel = new QLabel(page);
-    userInfoLabel->setStyleSheet("font-size:16px; color:#34495e;");
+    // 用户信息显示
+    auto *userInfoLabel = new QLabel(card);
+    userInfoLabel->setStyleSheet(Styles::Labels::info());
     userInfoLabel->setAlignment(Qt::AlignCenter);
-    // 直接显示前面输入的学号和姓名（在switchPage时更新）
-    QString infoText = tr("学号/工号：%1\n姓名：%2")
+    QString infoText = tr("账号：%1 | 姓名：%2")
         .arg(m_tempUserId.isEmpty() ? tr("未知") : m_tempUserId)
         .arg(m_tempUserName.isEmpty() ? tr("未知") : m_tempUserName);
     userInfoLabel->setText(infoText);
-    infoLayout->addWidget(userInfoLabel);
-    
-    // 保存标签指针，以便在switchPage时更新
     m_loginUserInfoLabel = userInfoLabel;
-
-    auto *form = new QFormLayout();
-    form->setLabelAlignment(Qt::AlignRight);
-    form->setFormAlignment(Qt::AlignHCenter);
-    form->setVerticalSpacing(12);
     
-    // 非首次登录只需要密码输入框
-    m_inputPass = new QLineEdit(page);
+    m_inputPass = new QLineEdit(card);
     m_inputPass->setEchoMode(QLineEdit::Password);
     m_inputPass->setPlaceholderText(tr("请输入密码"));
-    m_inputPass->setFixedWidth(300);
-    form->addRow(tr("密码："), m_inputPass);
+    m_inputPass->setFixedWidth(320);
 
-    auto *btnLogin = new QPushButton(tr("登录"), page);
-    btnLogin->setFixedWidth(160);
+    auto *btnLogin = new QPushButton(tr("登录"), card);
+    btnLogin->setStyleSheet(Styles::Buttons::primary());
+    btnLogin->setCursor(Qt::PointingHandCursor);
     connect(btnLogin, &QPushButton::clicked, this, [this] {
-        // 使用临时保存的用户信息进行登录
         if (m_tempUserId.isEmpty() || m_tempUserName.isEmpty()) {
             QMessageBox::warning(this, tr("错误"), tr("用户信息丢失，请重新输入。"));
             switchPage(Page::UserInput);
@@ -367,7 +395,6 @@ QWidget* MainWindow::createLoginPage()
             return;
         }
 
-        // 调用密码校验逻辑
         auto record = DatabaseManager::fetchUserByIdAndNameAndPassword(m_tempUserId, m_tempUserName, password);
         if (!record) {
             QMessageBox::warning(this, tr("登录失败"), tr("密码错误，请检查输入。"));
@@ -379,30 +406,36 @@ QWidget* MainWindow::createLoginPage()
 
         updateRoleLabel();
         updateProfileFromUser();
-        QMessageBox::information(this, tr("登录成功"), tr("已从数据库加载用户信息。"));
+        QMessageBox::information(this, tr("登录成功"), tr("欢迎回来！"));
         switchPage(Page::Dashboard);
     });
 
-    auto *btnReset = new QPushButton(tr("修改密码"), page);
-    btnReset->setFlat(true);
+    auto *btnReset = new QPushButton(tr("忘记密码？修改密码"), card);
+    btnReset->setStyleSheet(Styles::Buttons::link());
+    btnReset->setCursor(Qt::PointingHandCursor);
     connect(btnReset, &QPushButton::clicked, this, [this] {
         switchPage(Page::ResetPwd);
     });
 
-    auto *btnBack = new QPushButton(tr("返回"), page);
-    btnBack->setFixedWidth(120);
+    auto *btnBack = new QPushButton(tr("返回"), card);
+    btnBack->setStyleSheet(Styles::Buttons::back());
+    btnBack->setCursor(Qt::PointingHandCursor);
     connect(btnBack, &QPushButton::clicked, this, [this] {
         switchPage(Page::UserInput);
     });
 
-    layout->addWidget(m_loginRoleLabel, 0, Qt::AlignCenter);
-    layout->addSpacing(10);
-    layout->addLayout(infoLayout);
-    layout->addSpacing(10);
-    layout->addLayout(form);
-    layout->addWidget(btnLogin, 0, Qt::AlignCenter);
-    layout->addWidget(btnReset, 0, Qt::AlignCenter);
-    layout->addWidget(btnBack, 0, Qt::AlignCenter);
+    cardLayout->addWidget(m_loginRoleLabel, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(8);
+    cardLayout->addWidget(userInfoLabel, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(16);
+    cardLayout->addWidget(m_inputPass, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(20);
+    cardLayout->addWidget(btnLogin, 0, Qt::AlignCenter);
+    cardLayout->addWidget(btnReset, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(8);
+    cardLayout->addWidget(btnBack, 0, Qt::AlignCenter);
+
+    layout->addWidget(card, 0, Qt::AlignCenter);
     return page;
 }
 
@@ -410,38 +443,39 @@ QWidget* MainWindow::createResetPwdPage()
 {
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
-    layout->setAlignment(Qt::AlignTop | Qt::AlignHCenter);
-    layout->setContentsMargins(40, 40, 40, 40);
-    layout->setSpacing(16);
+    layout->setAlignment(Qt::AlignCenter);
 
-    auto *title = new QLabel(tr("重置密码"), page);
-    title->setStyleSheet("font-size:20px; font-weight:700;");
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    card->setFixedSize(480, 500);
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setAlignment(Qt::AlignCenter);
+    cardLayout->setSpacing(14);
+    cardLayout->setContentsMargins(50, 40, 50, 40);
+
+    auto *title = new QLabel(tr("🔑 修改密码"), card);
+    title->setStyleSheet(Styles::Labels::pageTitle());
     title->setAlignment(Qt::AlignCenter);
 
-    auto *form = new QFormLayout();
-    form->setLabelAlignment(Qt::AlignRight);
-    form->setFormAlignment(Qt::AlignHCenter);
-    form->setVerticalSpacing(16);
-
-    auto *inputOld = new QLineEdit(page);
+    auto *inputOld = new QLineEdit(card);
     inputOld->setPlaceholderText(tr("请输入旧密码"));
     inputOld->setEchoMode(QLineEdit::Password);
-    auto *inputNew = new QLineEdit(page);
-    inputNew->setPlaceholderText(tr("请输入新密码"));
+    inputOld->setFixedWidth(320);
+    
+    auto *inputNew = new QLineEdit(card);
+    inputNew->setPlaceholderText(tr("请输入新密码（至少6位）"));
     inputNew->setEchoMode(QLineEdit::Password);
-    auto *inputConfirm = new QLineEdit(page);
-    inputConfirm->setPlaceholderText(tr("请再次输入新密码"));
+    inputNew->setFixedWidth(320);
+    
+    auto *inputConfirm = new QLineEdit(card);
+    inputConfirm->setPlaceholderText(tr("请再次确认新密码"));
     inputConfirm->setEchoMode(QLineEdit::Password);
-    inputOld->setFixedWidth(300);
-    inputNew->setFixedWidth(300);
-    inputConfirm->setFixedWidth(300);
+    inputConfirm->setFixedWidth(320);
 
-    form->addRow(tr("旧密码："), inputOld);
-    form->addRow(tr("新密码："), inputNew);
-    form->addRow(tr("确认密码："), inputConfirm);
-
-    auto *btnSubmit = new QPushButton(tr("提交"), page);
-    btnSubmit->setFixedWidth(140);
+    auto *btnSubmit = new QPushButton(tr("确认修改"), card);
+    btnSubmit->setStyleSheet(Styles::Buttons::primary());
+    btnSubmit->setCursor(Qt::PointingHandCursor);
     connect(btnSubmit, &QPushButton::clicked, this, [this, inputOld, inputNew, inputConfirm] {
         const QString oldPassword = inputOld->text();
         const QString newPassword = inputNew->text();
@@ -462,10 +496,9 @@ QWidget* MainWindow::createResetPwdPage()
             return;
         }
 
-        // 修改密码时采用当前待登录的账号（来自学号/姓名输入页面）
         const QString userId = m_tempUserId;
         if (userId.isEmpty()) {
-            QMessageBox::warning(this, tr("错误"), tr("用户信息丢失，请返回上一页重新输入学号和姓名。"));
+            QMessageBox::warning(this, tr("错误"), tr("用户信息丢失，请返回上一页重新输入。"));
             switchPage(Page::UserInput);
             return;
         }
@@ -475,7 +508,6 @@ QWidget* MainWindow::createResetPwdPage()
             return;
         }
 
-        // 修改成功后要求用户使用新密码重新登录
         if (m_inputPass) {
             m_inputPass->clear();
         }
@@ -483,16 +515,24 @@ QWidget* MainWindow::createResetPwdPage()
         switchPage(Page::Login);
     });
 
-    auto *btnBack = new QPushButton(tr("返回"), page);
-    btnBack->setFixedWidth(120);
+    auto *btnBack = new QPushButton(tr("返回"), card);
+    btnBack->setStyleSheet(Styles::Buttons::back());
+    btnBack->setCursor(Qt::PointingHandCursor);
     connect(btnBack, &QPushButton::clicked, this, [this] {
         switchPage(Page::Login);
     });
 
-    layout->addWidget(title, 0, Qt::AlignCenter);
-    layout->addLayout(form);
-    layout->addWidget(btnSubmit, 0, Qt::AlignCenter);
-    layout->addWidget(btnBack, 0, Qt::AlignCenter);
+    cardLayout->addWidget(title, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(16);
+    cardLayout->addWidget(inputOld, 0, Qt::AlignCenter);
+    cardLayout->addWidget(inputNew, 0, Qt::AlignCenter);
+    cardLayout->addWidget(inputConfirm, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(20);
+    cardLayout->addWidget(btnSubmit, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(8);
+    cardLayout->addWidget(btnBack, 0, Qt::AlignCenter);
+
+    layout->addWidget(card, 0, Qt::AlignCenter);
     return page;
 }
 
@@ -500,72 +540,41 @@ QWidget* MainWindow::createDashboardPage()
 {
     auto *page = new QWidget(this);
     auto *outerLayout = new QVBoxLayout(page);
-    outerLayout->setContentsMargins(16, 16, 16, 16);
-    outerLayout->setSpacing(0);
+    outerLayout->setContentsMargins(24, 24, 24, 24);
+    outerLayout->setSpacing(16);
+
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(32, 24, 32, 24);
+    cardLayout->setSpacing(20);
 
     // 顶部栏：标题和退出登录按钮
     auto *topBar = new QHBoxLayout();
     topBar->setContentsMargins(0, 0, 0, 0);
     
-    auto *title = new QLabel(tr("NUIST智能雨具系统"), page);
-    title->setStyleSheet("font-size:22px; font-weight:700;");
+    auto *title = new QLabel(tr("☂️ NUIST 智能雨具系统"), card);
+    title->setStyleSheet(Styles::Labels::pageTitle());
     
-    auto *btnLogout = new QPushButton(tr("退出登录"), page);
-    btnLogout->setFixedWidth(100);
-    btnLogout->setStyleSheet("font-size:14px; padding:6px 12px;");
+    auto *btnLogout = new QPushButton(tr("退出登录"), card);
+    btnLogout->setStyleSheet(Styles::Buttons::logout());
+    btnLogout->setCursor(Qt::PointingHandCursor);
     
-    // 站点选择区域
-    auto *stationLayout = new QHBoxLayout();
-    stationLayout->setAlignment(Qt::AlignHCenter);
-    stationLayout->setSpacing(10);
-    
-    auto *stationLabel = new QLabel(tr("请选择您所在的站点："), page);
-    stationLabel->setStyleSheet("font-size:14px;");
-    
-    m_stationComboBox = new QComboBox(page);
-    m_stationComboBox->setFixedWidth(200);
-    m_stationComboBox->setStyleSheet("font-size:14px; padding:4px;");
-    loadStations(); // 加载站点列表
-    
-    connect(m_stationComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
-            this, &MainWindow::onStationChanged);
-    
-    stationLayout->addWidget(stationLabel);
-    stationLayout->addWidget(m_stationComboBox);
-    stationLayout->addStretch();
     connect(btnLogout, &QPushButton::clicked, this, [this] {
-        // 清除用户信息
         m_currentUser.reset();
         m_tempUserId.clear();
         m_tempUserName.clear();
         m_currentRole = Role::Unknown;
         m_currentStationId = 0;
         
-        // 清空登录页面的输入框
-        if (m_inputPass) {
-            m_inputPass->clear();
-        }
-        if (m_inputNewPass) {
-            m_inputNewPass->clear();
-        }
-        if (m_inputConfirmPass) {
-            m_inputConfirmPass->clear();
-        }
+        if (m_inputPass) m_inputPass->clear();
+        if (m_inputNewPass) m_inputNewPass->clear();
+        if (m_inputConfirmPass) m_inputConfirmPass->clear();
+        if (m_stationComboBox) m_stationComboBox->setCurrentIndex(0);
+        if (m_inputUser) m_inputUser->clear();
+        if (m_inputName) m_inputName->clear();
         
-        // 清空站点选择
-        if (m_stationComboBox) {
-            m_stationComboBox->setCurrentIndex(0);
-        }
-        
-        // 清空用户输入页面的输入框
-        if (m_inputUser) {
-            m_inputUser->clear();
-        }
-        if (m_inputName) {
-            m_inputName->clear();
-        }
-        
-        // 返回欢迎页面
         switchPage(Page::Welcome);
     });
     
@@ -573,24 +582,39 @@ QWidget* MainWindow::createDashboardPage()
     topBar->addStretch();
     topBar->addWidget(btnLogout);
     
-    // 站点选择区域（独立一行）
-    auto *stationRow = new QHBoxLayout();
-    stationRow->setContentsMargins(0, 10, 0, 10);
-    stationRow->addStretch();
-    stationRow->addLayout(stationLayout);
-    stationRow->addStretch();
+    // 站点选择区域（无背景，直接显示）
+    auto *stationContainer = new QWidget(card);
+    stationContainer->setStyleSheet("background: transparent;");
+    auto *stationLayout = new QHBoxLayout(stationContainer);
+    stationLayout->setContentsMargins(0, 8, 0, 8);
+    stationLayout->setSpacing(12);
     
-    // 主内容区域
-    auto *layout = new QVBoxLayout();
-    layout->setAlignment(Qt::AlignCenter);
-    layout->setSpacing(18);
+    auto *stationLabel = new QLabel(tr("📍 当前站点："), stationContainer);
+    stationLabel->setStyleSheet("font-size: 15px; font-weight: 600; color: #4a4a68; background: transparent;");
+    
+    m_stationComboBox = new QComboBox(stationContainer);
+    m_stationComboBox->setFixedWidth(220);
+    loadStations();
+    
+    connect(m_stationComboBox, QOverload<int>::of(&QComboBox::currentIndexChanged), 
+            this, &MainWindow::onStationChanged);
+    
+    stationLayout->addStretch();
+    stationLayout->addWidget(stationLabel);
+    stationLayout->addWidget(m_stationComboBox);
+    stationLayout->addStretch();
+    
+    // 主功能按钮区
+    auto *buttonsLayout = new QHBoxLayout();
+    buttonsLayout->setSpacing(24);
+    buttonsLayout->setAlignment(Qt::AlignCenter);
 
-    auto *btnBorrow = new QPushButton(tr("我要借伞"), page);
-    auto *btnReturn = new QPushButton(tr("我要还伞"), page);
-    btnBorrow->setFixedSize(200, 80);
-    btnReturn->setFixedSize(200, 80);
-    btnBorrow->setStyleSheet("font-size:18px;");
-    btnReturn->setStyleSheet("font-size:18px;");
+    auto *btnBorrow = new QPushButton(tr("☔ 我要借伞"), card);
+    auto *btnReturn = new QPushButton(tr("🔄 我要还伞"), card);
+    btnBorrow->setStyleSheet(Styles::Buttons::feature());
+    btnReturn->setStyleSheet(Styles::Buttons::feature());
+    btnBorrow->setCursor(Qt::PointingHandCursor);
+    btnReturn->setCursor(Qt::PointingHandCursor);
 
     connect(btnBorrow, &QPushButton::clicked, this, [this] {
         if (m_currentStationId == 0) {
@@ -609,19 +633,30 @@ QWidget* MainWindow::createDashboardPage()
         switchPage(Page::Borrow);
     });
 
-    auto *btnInstruction = new QPushButton(tr("使用说明"), page);
-    btnInstruction->setFlat(true);
+    buttonsLayout->addWidget(btnBorrow);
+    buttonsLayout->addWidget(btnReturn);
+
+    // 使用说明链接
+    auto *btnInstruction = new QPushButton(tr("📖 查看使用说明与收费标准"), card);
+    btnInstruction->setStyleSheet(Styles::Buttons::link());
+    btnInstruction->setCursor(Qt::PointingHandCursor);
     connect(btnInstruction, &QPushButton::clicked, this, [this] {
         switchPage(Page::Instruction);
     });
 
+    // 底部导航
     auto *bottom = new QHBoxLayout();
-    bottom->setContentsMargins(20, 0, 20, 0);
-    bottom->setSpacing(20);
-    auto *btnProfile = new QPushButton(tr("👤 个人中心"), page);
-    btnProfile->setFixedWidth(150);
-    auto *btnMap = new QPushButton(tr("🗺️ 查看地图"), page);
-    btnMap->setFixedWidth(150);
+    bottom->setContentsMargins(0, 16, 0, 0);
+    bottom->setSpacing(16);
+    
+    auto *btnProfile = new QPushButton(tr("👤 个人中心"), card);
+    btnProfile->setStyleSheet(Styles::Buttons::nav());
+    btnProfile->setCursor(Qt::PointingHandCursor);
+    
+    auto *btnMap = new QPushButton(tr("🗺️ 站点地图"), card);
+    btnMap->setStyleSheet(Styles::Buttons::nav());
+    btnMap->setCursor(Qt::PointingHandCursor);
+    
     connect(btnProfile, &QPushButton::clicked, this, [this] {
         updateProfileFromUser();
         switchPage(Page::Profile);
@@ -629,21 +664,21 @@ QWidget* MainWindow::createDashboardPage()
     connect(btnMap, &QPushButton::clicked, this, [this] {
         switchPage(Page::Map);
     });
-    bottom->addWidget(btnProfile, 0, Qt::AlignLeft);
-    bottom->addStretch();
-    bottom->addWidget(btnMap, 0, Qt::AlignRight);
-
-    layout->addWidget(btnBorrow, 0, Qt::AlignCenter);
-    layout->addWidget(btnReturn, 0, Qt::AlignCenter);
-    layout->addWidget(btnInstruction, 0, Qt::AlignCenter);
-    layout->addLayout(bottom);
     
-    // 组装页面布局
-    outerLayout->addLayout(topBar);
-    outerLayout->addLayout(stationRow);
-    outerLayout->addStretch();
-    outerLayout->addLayout(layout);
-    outerLayout->addStretch();
+    bottom->addWidget(btnProfile);
+    bottom->addStretch();
+    bottom->addWidget(btnMap);
+
+    // 组装卡片布局
+    cardLayout->addLayout(topBar);
+    cardLayout->addWidget(stationContainer);
+    cardLayout->addStretch();
+    cardLayout->addLayout(buttonsLayout);
+    cardLayout->addWidget(btnInstruction, 0, Qt::AlignCenter);
+    cardLayout->addStretch();
+    cardLayout->addLayout(bottom);
+
+    outerLayout->addWidget(card);
     
     return page;
 }
@@ -652,14 +687,23 @@ QWidget* MainWindow::createBorrowPage()
 {
     auto *page = new QWidget(this);
     auto *outer = new QVBoxLayout(page);
-    outer->setContentsMargins(16, 16, 16, 16);
-    outer->setSpacing(12);
+    outer->setContentsMargins(24, 24, 24, 24);
+    outer->setSpacing(16);
+
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(24, 20, 24, 20);
+    cardLayout->setSpacing(16);
 
     auto *topBar = new QHBoxLayout();
-    m_slotTitle = new QLabel(tr("借伞模式"), page);
-    m_slotTitle->setStyleSheet("font-size:18px; font-weight:700;");
-    auto *btnBack = new QPushButton(tr("返回"), page);
-    btnBack->setFixedWidth(120);
+    m_slotTitle = new QLabel(tr("☔ 借伞模式"), card);
+    m_slotTitle->setStyleSheet(Styles::Labels::pageTitle());
+    
+    auto *btnBack = new QPushButton(tr("返回主页"), card);
+    btnBack->setStyleSheet(Styles::Buttons::back());
+    btnBack->setCursor(Qt::PointingHandCursor);
     connect(btnBack, &QPushButton::clicked, this, [this] {
         switchPage(Page::Dashboard);
     });
@@ -667,15 +711,21 @@ QWidget* MainWindow::createBorrowPage()
     topBar->addWidget(m_slotTitle);
     topBar->addStretch();
     topBar->addWidget(btnBack);
-    outer->addLayout(topBar);
+    cardLayout->addLayout(topBar);
+
+    // 提示信息
+    auto *hintLabel = new QLabel(card);
+    hintLabel->setStyleSheet(Styles::Labels::hint());
+    hintLabel->setAlignment(Qt::AlignCenter);
+    hintLabel->setText(tr("🟢 绿色=可借  ⚪ 灰色=空槽可还  🔴 红色=故障"));
+    cardLayout->addWidget(hintLabel);
 
     auto *grid = new QGridLayout();
-    grid->setSpacing(10);
+    grid->setSpacing(14);
 
     // Create 12 slot widgets (3x4)
     for (int i = 0; i < 12; ++i) {
-        auto *slot = new SlotItem(i, page);
-        // 初始状态设为Empty（灰色），等待从数据库加载
+        auto *slot = new SlotItem(i, card);
         slot->setState(SlotItem::State::Empty);
         slot->setIcon(QPixmap(), QStringLiteral("#%1").arg(i + 1));
         
@@ -691,13 +741,11 @@ QWidget* MainWindow::createBorrowPage()
                 return;
             }
             
-            int slotId = index + 1; // 槽位ID从1开始
+            int slotId = index + 1;
             
             if (m_borrowMode) {
-                // 借伞模式
                 handleBorrowGear(slotId, index);
             } else {
-                // 还伞模式
                 handleReturnGear(slotId, index);
             }
         });
@@ -705,7 +753,8 @@ QWidget* MainWindow::createBorrowPage()
         grid->addWidget(slot, i / 4, i % 4);
     }
 
-    outer->addLayout(grid);
+    cardLayout->addLayout(grid);
+    outer->addWidget(card);
     return page;
 }
 
@@ -713,15 +762,23 @@ QWidget* MainWindow::createMapPage()
 {
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
-    layout->setContentsMargins(16, 16, 16, 16);
-    layout->setSpacing(12);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(16);
+
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(24, 20, 24, 20);
+    cardLayout->setSpacing(16);
 
     // 顶部标题栏
     auto *topBar = new QHBoxLayout();
-    auto *title = new QLabel(tr("校园雨具站点分布图"), page);
-    title->setStyleSheet("font-size:18px; font-weight:700;");
-    auto *btnBack = new QPushButton(tr("返回"), page);
-    btnBack->setFixedWidth(120);
+    auto *title = new QLabel(tr("🗺️ 校园雨具站点分布图"), card);
+    title->setStyleSheet(Styles::Labels::pageTitle());
+    auto *btnBack = new QPushButton(tr("返回主页"), card);
+    btnBack->setStyleSheet(Styles::Buttons::back());
+    btnBack->setCursor(Qt::PointingHandCursor);
     connect(btnBack, &QPushButton::clicked, this, [this] {
         switchPage(Page::Dashboard);
     });
@@ -729,71 +786,95 @@ QWidget* MainWindow::createMapPage()
     topBar->addStretch();
     topBar->addWidget(btnBack);
 
-    // 地图容器（使用QWidget作为画布，不使用真实地图图片）
-    auto *mapContainer = new QWidget(page);
-    mapContainer->setMinimumSize(800, 600);
-    mapContainer->setStyleSheet(
-        "background-color: #ecf0f1; "
-        "border: 2px solid #bdc3c7; "
-        "border-radius: 8px;");
+    // 图例说明
+    auto *legendLabel = new QLabel(tr("🟢 库存充足(≥5)  🟡 库存紧张(2-4)  🔴 库存不足(<2)"), card);
+    legendLabel->setStyleSheet(Styles::Labels::hint());
+    legendLabel->setAlignment(Qt::AlignCenter);
+
+    // 地图容器
+    auto *mapContainer = new QWidget(card);
+    mapContainer->setMinimumSize(750, 500);
+    mapContainer->setStyleSheet(Styles::mapContainer());
     
-    // 从数据库加载站点数据并绘制
     loadMapStations(mapContainer);
 
-    layout->addLayout(topBar);
-    layout->addWidget(mapContainer, 1);
+    cardLayout->addLayout(topBar);
+    cardLayout->addWidget(legendLabel);
+    cardLayout->addWidget(mapContainer, 1);
+    
+    layout->addWidget(card);
     return page;
 }
 
 QWidget* MainWindow::createProfilePage()
 {
     auto *page = new QWidget(this);
-    auto *top = new QVBoxLayout(page);
-    top->setContentsMargins(16, 16, 16, 16);
-    top->setSpacing(12);
+    auto *layout = new QVBoxLayout(page);
+    layout->setAlignment(Qt::AlignCenter);
 
-    // 内容区居中
-    auto *center = new QWidget(page);
-    auto *vbox = new QVBoxLayout(center);
-    vbox->setAlignment(Qt::AlignCenter); // 整体垂直水平居中
-    vbox->setSpacing(12);
-    m_profileTitle = new QLabel(tr("个人信息"), center);
-    m_profileTitle->setStyleSheet("font-size:22px; font-weight:700;");
-    m_profileName = new QLabel(center);
-    m_profileId = new QLabel(center);
-    m_profileBalance = new QLabel(center);
-    m_profileName->setStyleSheet("font-size:18px;");
-    m_profileId->setStyleSheet("font-size:16px; color:#444;");
-    m_profileBalance->setStyleSheet("font-size:18px; font-weight:600;");
-    vbox->addWidget(m_profileTitle, 0, Qt::AlignHCenter);
-    vbox->addWidget(m_profileName, 0, Qt::AlignHCenter);
-    vbox->addWidget(m_profileId, 0, Qt::AlignHCenter);
-    vbox->addWidget(m_profileBalance, 0, Qt::AlignHCenter);
-    vbox->addSpacing(12);
-    center->setLayout(vbox);
-    // 将内容区整体加到顶层layout并占据较多空间以实现视觉居中
-    top->addStretch(2);
-    top->addWidget(center, 0, Qt::AlignCenter);
-    top->addStretch(3);
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    card->setFixedSize(450, 420);
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setAlignment(Qt::AlignCenter);
+    cardLayout->setSpacing(16);
+    cardLayout->setContentsMargins(40, 40, 40, 40);
 
-    // 底部刷新和返回按钮
-    auto *bottom = new QHBoxLayout();
-    bottom->setContentsMargins(0,0,0,0);
-    bottom->setSpacing(0);
-    auto *btnRefresh = new QPushButton(tr("刷新余额"), page);
-    btnRefresh->setFixedWidth(140);
+    // 头像区域
+    auto *avatarLabel = new QLabel("👤", card);
+    avatarLabel->setStyleSheet("font-size: 64px;");
+    avatarLabel->setAlignment(Qt::AlignCenter);
+
+    m_profileTitle = new QLabel(tr("个人中心"), card);
+    m_profileTitle->setStyleSheet(Styles::Labels::pageTitle());
+    m_profileTitle->setAlignment(Qt::AlignCenter);
+    
+    m_profileName = new QLabel(card);
+    m_profileName->setStyleSheet(Styles::Labels::info());
+    m_profileName->setAlignment(Qt::AlignCenter);
+    
+    m_profileId = new QLabel(card);
+    m_profileId->setStyleSheet(Styles::Labels::hint());
+    m_profileId->setAlignment(Qt::AlignCenter);
+    
+    m_profileBalance = new QLabel(card);
+    m_profileBalance->setStyleSheet(Styles::Labels::balance());
+    m_profileBalance->setAlignment(Qt::AlignCenter);
+
+    // 按钮区域
+    auto *btnLayout = new QHBoxLayout();
+    btnLayout->setSpacing(16);
+    
+    auto *btnRefresh = new QPushButton(tr("🔄 刷新余额"), card);
+    btnRefresh->setStyleSheet(Styles::Buttons::secondary());
+    btnRefresh->setCursor(Qt::PointingHandCursor);
     connect(btnRefresh, &QPushButton::clicked, this, [this] {
         updateProfileFromUser();
+        QMessageBox::information(this, tr("提示"), tr("余额已刷新"));
     });
-    auto *btnBack = new QPushButton(tr("返回"), page);
-    btnBack->setFixedWidth(120);
+    
+    auto *btnBack = new QPushButton(tr("返回主页"), card);
+    btnBack->setStyleSheet(Styles::Buttons::back());
+    btnBack->setCursor(Qt::PointingHandCursor);
     connect(btnBack, &QPushButton::clicked, this, [this] {
         switchPage(Page::Dashboard);
     });
-    bottom->addWidget(btnRefresh,0,Qt::AlignLeft);
-    bottom->addStretch();
-    bottom->addWidget(btnBack,0,Qt::AlignRight);
-    top->addLayout(bottom);
+    
+    btnLayout->addWidget(btnRefresh);
+    btnLayout->addWidget(btnBack);
+
+    cardLayout->addWidget(avatarLabel, 0, Qt::AlignCenter);
+    cardLayout->addWidget(m_profileTitle, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(8);
+    cardLayout->addWidget(m_profileName, 0, Qt::AlignCenter);
+    cardLayout->addWidget(m_profileId, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(8);
+    cardLayout->addWidget(m_profileBalance, 0, Qt::AlignCenter);
+    cardLayout->addSpacing(20);
+    cardLayout->addLayout(btnLayout);
+
+    layout->addWidget(card, 0, Qt::AlignCenter);
     updateProfileFromUser();
     return page;
 }
@@ -802,44 +883,70 @@ QWidget* MainWindow::createInstructionPage()
 {
     auto *page = new QWidget(this);
     auto *layout = new QVBoxLayout(page);
-    layout->setContentsMargins(12, 12, 12, 12);
-    layout->setSpacing(8);
+    layout->setContentsMargins(24, 24, 24, 24);
+    layout->setSpacing(16);
 
-    auto *title = new QLabel(tr("使用说明 / 服务协议"), page);
-    title->setStyleSheet("font-size:20px; font-weight:700;");
+    // 玻璃卡片容器
+    auto *card = new QWidget(page);
+    card->setStyleSheet(Styles::pageContainer());
+    auto *cardLayout = new QVBoxLayout(card);
+    cardLayout->setContentsMargins(24, 20, 24, 20);
+    cardLayout->setSpacing(16);
 
-    m_instructionViewer = new QTextBrowser(page);
-    m_instructionViewer->setOpenExternalLinks(false);
-    m_instructionViewer->setHtml(
-        "<h2 align=\"center\">NUIST 智能雨具系统服务协议</h2>"
-        "<hr>"
-        "<h3>一、 服务对象</h3>"
-        "<p>本系统仅面向 NUIST 在校教职工与学生开放，登录需验证校园一卡通账户。</p>"
-        "<h3>二、 借还规则</h3>"
-        "<p><b>1. 借出：</b>账户余额需大于 <b>20.00元</b> 方可使用。借出时系统将冻结相应金额作为押金。</p>"
-        "<p><b>2. 归还：</b>请将雨具插入任意站点的空闲卡槽，听到“咔哒”上锁声并看到屏幕提示“归还成功”后方可离开。</p>"
-        "<h3>三、 资费标准 (自动扣款)</h3>"
-        "<ul>"
-        "<li><b>普通雨伞/一次性雨衣：</b> 押金 20元。</li>"
-        "<li><b>高级抗风伞/加厚雨衣：</b> 押金 50元。</li>"
-        "<li><b>免费时长：</b> 借出后 <b>24小时内</b> 归还免费。</li>"
-        "<li><b>超时费用：</b> 超过24小时，按 <b>1元/12小时</b> 从余额扣除，直至扣完押金。</li>"
-        "</ul>"
-        "<h3>四、 遗失与损坏</h3>"
-        "<p>若雨具遗失或严重损坏导致无法归还，系统将<b>扣除全额押金</b>用于赔偿。</p>"
-        "<h3>五、 联系我们</h3>"
-        "<p>如遇设备故障或扣费异常，请点击主页左侧的<b>【联系客服】</b>按钮，或致电校园服务中心：5873-6110。</p>"
-    );
-
-    auto *btnBack = new QPushButton(tr("我已阅读"), page);
-    btnBack->setFixedWidth(140);
+    // 顶部标题栏
+    auto *topBar = new QHBoxLayout();
+    auto *title = new QLabel(tr("📖 使用说明与服务协议"), card);
+    title->setStyleSheet(Styles::Labels::pageTitle());
+    auto *btnBack = new QPushButton(tr("返回主页"), card);
+    btnBack->setStyleSheet(Styles::Buttons::back());
+    btnBack->setCursor(Qt::PointingHandCursor);
     connect(btnBack, &QPushButton::clicked, this, [this] {
         switchPage(Page::Dashboard);
     });
+    topBar->addWidget(title);
+    topBar->addStretch();
+    topBar->addWidget(btnBack);
 
-    layout->addWidget(title);
-    layout->addWidget(m_instructionViewer, 1);
-    layout->addWidget(btnBack, 0, Qt::AlignRight);
+    m_instructionViewer = new QTextBrowser(card);
+    m_instructionViewer->setOpenExternalLinks(false);
+    m_instructionViewer->setHtml(
+        "<div style='font-family: Microsoft YaHei UI, sans-serif; color: #1a1a2e; line-height: 1.8;'>"
+        "<h2 style='text-align:center; color:#667eea;'>☂️ NUIST 智能雨具系统服务协议</h2>"
+        "<hr style='border: 1px solid #e4e9f2;'>"
+        "<h3 style='color:#764ba2;'>一、服务对象</h3>"
+        "<p>本系统仅面向 <b>NUIST 在校教职工与学生</b> 开放，登录需验证校园一卡通账户。</p>"
+        "<h3 style='color:#764ba2;'>二、借还规则</h3>"
+        "<p><b>🔹 借出：</b>账户余额需大于相应押金方可借用。借出时系统将冻结相应金额作为押金。</p>"
+        "<p><b>🔹 归还：</b>请将雨具插入任意站点的空闲卡槽，看到屏幕提示【归还成功】后方可离开。</p>"
+        "<h3 style='color:#764ba2;'>三、资费标准</h3>"
+        "<table style='width:100%; border-collapse:collapse; margin:10px 0;'>"
+        "<tr style='background:#f8f9ff;'><td style='padding:8px; border:1px solid #e4e9f2;'><b>雨具类型</b></td><td style='padding:8px; border:1px solid #e4e9f2;'><b>押金</b></td></tr>"
+        "<tr><td style='padding:8px; border:1px solid #e4e9f2;'>普通塑料伞</td><td style='padding:8px; border:1px solid #e4e9f2;'>10 元</td></tr>"
+        "<tr><td style='padding:8px; border:1px solid #e4e9f2;'>高质量抗风伞</td><td style='padding:8px; border:1px solid #e4e9f2;'>20 元</td></tr>"
+        "<tr><td style='padding:8px; border:1px solid #e4e9f2;'>专用遮阳伞</td><td style='padding:8px; border:1px solid #e4e9f2;'>15 元</td></tr>"
+        "<tr><td style='padding:8px; border:1px solid #e4e9f2;'>雨衣</td><td style='padding:8px; border:1px solid #e4e9f2;'>25 元</td></tr>"
+        "</table>"
+        "<p>⏰ <b>免费时长：</b>借出后 <b style='color:#00d68f;'>24小时内</b> 归还免费。</p>"
+        "<p>💰 <b>超时费用：</b>超过24小时，按 <b style='color:#ff3d71;'>1元/12小时</b> 从余额扣除。</p>"
+        "<h3 style='color:#764ba2;'>四、遗失与损坏</h3>"
+        "<p>若雨具遗失或严重损坏导致无法归还，系统将<b style='color:#ff3d71;'>扣除全额押金</b>用于赔偿。</p>"
+        "<h3 style='color:#764ba2;'>五、联系我们</h3>"
+        "<p>如遇设备故障或扣费异常，请致电校园服务中心：<b>5873-6110</b></p>"
+        "</div>"
+    );
+
+    auto *btnConfirm = new QPushButton(tr("✓ 我已阅读并同意"), card);
+    btnConfirm->setStyleSheet(Styles::Buttons::primary());
+    btnConfirm->setCursor(Qt::PointingHandCursor);
+    connect(btnConfirm, &QPushButton::clicked, this, [this] {
+        switchPage(Page::Dashboard);
+    });
+
+    cardLayout->addLayout(topBar);
+    cardLayout->addWidget(m_instructionViewer, 1);
+    cardLayout->addWidget(btnConfirm, 0, Qt::AlignCenter);
+
+    layout->addWidget(card);
     return page;
 }
 
@@ -847,7 +954,7 @@ void MainWindow::switchPage(Page page)
 {
     m_stack->setCurrentIndex(static_cast<int>(page));
     if (page == Page::Borrow && m_slotTitle) {
-        m_slotTitle->setText(m_borrowMode ? tr("借伞模式") : tr("还伞模式"));
+        m_slotTitle->setText(m_borrowMode ? tr("☔ 借伞模式") : tr("🔄 还伞模式"));
         // 切换到借还页面时，如果已选择站点，刷新槽位状态
         if (m_currentStationId > 0) {
             refreshSlotsFromDatabase();
@@ -914,21 +1021,21 @@ void MainWindow::updateProfileFromUser()
     if (!m_profileName || !m_profileId || !m_profileBalance || !m_profileTitle) return;
 
     if (!m_currentUser) {
-        m_profileTitle->setText(tr("个人信息"));
-        m_profileName->setText(tr("姓名：-"));
+        m_profileTitle->setText(tr("个人中心"));
+        m_profileName->setText(tr("姓名：未登录"));
         m_profileId->setText(tr("账号：-"));
-        m_profileBalance->setText(tr("账户余额：￥0.00"));
-        m_profileBalance->setStyleSheet("font-size:18px; font-weight:600; color:#7f8c8d;");
+        m_profileBalance->setText(tr("￥0.00"));
+        m_profileBalance->setStyleSheet("font-size:28px; font-weight:700; color:#8f8fa3;");
         return;
     }
 
     const bool isStaff = m_currentUser->get_role() == 1;
-    m_profileTitle->setText(tr("个人信息"));
-    m_profileName->setText(tr("姓名：%1").arg(m_currentUser->get_name()));
+    m_profileTitle->setText(tr("个人中心"));
+    m_profileName->setText(tr("👋 %1").arg(m_currentUser->get_name()));
     m_profileId->setText(isStaff ? tr("工号：%1").arg(m_currentUser->get_id())
                                  : tr("学号：%1").arg(m_currentUser->get_id()));
-    m_profileBalance->setText(tr("账户余额：￥%1").arg(QString::number(m_currentUser->get_balance(), 'f', 2)));
-    m_profileBalance->setStyleSheet("font-size:18px; font-weight:600; color:#2ecc71;");
+    m_profileBalance->setText(tr("💰 ￥%1").arg(QString::number(m_currentUser->get_balance(), 'f', 2)));
+    m_profileBalance->setStyleSheet(Styles::Labels::balance());
 }
 
 bool MainWindow::performUserInput()
@@ -1352,14 +1459,59 @@ void MainWindow::handleReturnGear(int slotId, int slotIndex)
     
     QString gearId = currentBorrow->gearId;
     
+    // 获取借出雨具的类型
+    auto borrowedGear = DatabaseManager::fetchGearById(gearId);
+    if (!borrowedGear) {
+        QMessageBox::warning(this, tr("错误"), tr("无法获取借出雨具的信息"));
+        return;
+    }
+    int borrowedTypeId = borrowedGear->typeId;
+    
+    // 根据槽位编号确定该槽位期望的雨具类型
+    // 1-4号槽位：普通塑料伞(1)，5-8号槽位：高质量抗风伞(2)，9-10号槽位：遮阳伞(3)，11-12号槽位：雨衣(4)
+    int expectedTypeId = 0;
+    QString expectedTypeName;
+    if (slotId >= 1 && slotId <= 4) {
+        expectedTypeId = 1;
+        expectedTypeName = tr("普通塑料伞");
+    } else if (slotId >= 5 && slotId <= 8) {
+        expectedTypeId = 2;
+        expectedTypeName = tr("高质量抗风伞");
+    } else if (slotId >= 9 && slotId <= 10) {
+        expectedTypeId = 3;
+        expectedTypeName = tr("专用遮阳伞");
+    } else if (slotId >= 11 && slotId <= 12) {
+        expectedTypeId = 4;
+        expectedTypeName = tr("雨衣");
+    }
+    
+    // 获取借出雨具的类型名称
+    QString borrowedTypeName;
+    switch (borrowedTypeId) {
+        case 1: borrowedTypeName = tr("普通塑料伞"); break;
+        case 2: borrowedTypeName = tr("高质量抗风伞"); break;
+        case 3: borrowedTypeName = tr("专用遮阳伞"); break;
+        case 4: borrowedTypeName = tr("雨衣"); break;
+        default: borrowedTypeName = tr("未知类型"); break;
+    }
+    
+    // 检查雨具类型是否匹配槽位
+    if (borrowedTypeId != expectedTypeId) {
+        QMessageBox::warning(this, tr("类型不匹配"), 
+            tr("您借的是【%1】，不能归还到【%2】的槽位。\n\n请选择 %3 号槽位归还。")
+            .arg(borrowedTypeName)
+            .arg(expectedTypeName)
+            .arg(borrowedTypeId == 1 ? "1-4" : 
+                 borrowedTypeId == 2 ? "5-8" : 
+                 borrowedTypeId == 3 ? "9-10" : "11-12"));
+        return;
+    }
+    
     // 检查该槽位是否为空（槽位为空表示可以还伞）
-    // 注意：fetchGearsByStation只返回该站点中存在的雨具（station_id匹配），如果槽位是空的，不会出现在结果中
-    // 但为了更安全，我们直接查询数据库检查槽位是否被占用
     auto gears = DatabaseManager::fetchGearsByStation(m_currentStationId);
     bool slotOccupied = false;
     for (const auto &gear : gears) {
         if (gear.slotId == slotId) {
-            // 如果槽位有雨具，无论状态如何都认为被占用（可借、损坏等都不能还伞）
             slotOccupied = true;
             qDebug() << "[MainWindow] 槽位" << slotId << "已被占用，雨具ID:" << gear.gearId << "状态:" << gear.status;
             break;
@@ -1373,7 +1525,7 @@ void MainWindow::handleReturnGear(int slotId, int slotIndex)
     
     // 确认对话框
     int ret = QMessageBox::question(this, tr("确认还伞"), 
-        tr("确认将雨具归还到槽位 #%1？").arg(slotId),
+        tr("确认将【%1】归还到槽位 #%2？").arg(borrowedTypeName).arg(slotId),
         QMessageBox::Yes | QMessageBox::No);
     
     if (ret != QMessageBox::Yes) {

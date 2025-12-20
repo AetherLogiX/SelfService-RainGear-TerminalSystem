@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% set active_page = 'gears' %}
+
+{% block title %}雨具管理 - CampusRain{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">☂️ 雨具管理</h1>
+    <p class="page-subtitle">管理所有雨具设备状态</p>
+</div>
+
+<!-- 筛选器 -->
+<div class="card">
+    <div style="display: flex; gap: 15px; align-items: center; flex-wrap: wrap;">
+        <label>状态筛选：</label>
+        <select id="statusFilter" onchange="filterGears()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <option value="">全部</option>
+            <option value="1">可用</option>
+            <option value="2">借出</option>
+            <option value="3">故障</option>
+        </select>
+        <label>类型筛选：</label>
+        <select id="typeFilter" onchange="filterGears()" style="padding: 8px 12px; border-radius: 8px; border: 1px solid #e2e8f0;">
+            <option value="">全部</option>
+            <option value="1">普通塑料伞</option>
+            <option value="2">高质量抗风伞</option>
+            <option value="3">专用遮阳伞</option>
+            <option value="4">雨衣</option>
+        </select>
+        <button class="btn btn-primary" onclick="loadGears()">🔄 刷新</button>
+    </div>
+</div>
+
+<!-- 雨具列表 -->
+<div class="card">
+    <h3 class="card-title">雨具列表</h3>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>雨具编号</th>
+                    <th>类型</th>
+                    <th>站点</th>
+                    <th>槽位</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody id="gearsTable">
+                <tr><td colspan="6" class="loading"><div class="spinner"></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    let allGears = [];
+    
+    // 加载雨具列表
+    async function loadGears() {
+        const result = await apiRequest('/admin/api/gears');
+        const tbody = document.getElementById('gearsTable');
+        
+        if (result.success) {
+            allGears = result.data;
+            filterGears();
+        } else {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#a0aec0;">加载失败</td></tr>';
+        }
+    }
+    
+    // 筛选雨具
+    function filterGears() {
+        const statusFilter = document.getElementById('statusFilter').value;
+        const typeFilter = document.getElementById('typeFilter').value;
+        
+        let filtered = allGears;
+        
+        if (statusFilter) {
+            filtered = filtered.filter(g => g.status == statusFilter);
+        }
+        if (typeFilter) {
+            filtered = filtered.filter(g => g.type_id == typeFilter);
+        }
+        
+        renderGears(filtered);
+    }
+    
+    // 渲染雨具列表
+    function renderGears(gears) {
+        const tbody = document.getElementById('gearsTable');
+        
+        if (gears.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#a0aec0;">暂无数据</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = gears.map(g => {
+            const statusBadge = {
+                1: '<span class="badge badge-success">可用</span>',
+                2: '<span class="badge badge-warning">借出</span>',
+                3: '<span class="badge badge-danger">故障</span>'
+            }[g.status] || '<span class="badge badge-info">未知</span>';
+            
+            const actions = g.status === 1 
+                ? `<button class="btn btn-danger btn-sm" onclick="setStatus('${g.gear_id}', 3)">标记故障</button>`
+                : g.status === 3
+                    ? `<button class="btn btn-success btn-sm" onclick="setStatus('${g.gear_id}', 1)">修复</button>`
+                    : '<span style="color:#a0aec0">-</span>';
+            
+            return `
+                <tr>
+                    <td><strong>${g.gear_id}</strong></td>
+                    <td>${g.type_name}</td>
+                    <td>${g.station_name}</td>
+                    <td>${g.slot_id || '-'}</td>
+                    <td>${statusBadge}</td>
+                    <td>${actions}</td>
+                </tr>
+            `;
+        }).join('');
+    }
+    
+    // 设置雨具状态
+    async function setStatus(gearId, status) {
+        const statusText = { 1: '可用', 2: '借出', 3: '故障' }[status];
+        if (!confirm(`确定要将雨具 ${gearId} 设置为"${statusText}"吗？`)) return;
+        
+        const result = await apiRequest(`/admin/api/gear/${gearId}/status`, {
+            method: 'POST',
+            body: JSON.stringify({ status: status })
+        });
+        
+        if (result.success) {
+            showMessage(result.message);
+            loadGears();
+        } else {
+            showMessage(result.message, 'error');
+        }
+    }
+    
+    // 页面加载
+    loadGears();
+</script>
+{% endblock %}
+

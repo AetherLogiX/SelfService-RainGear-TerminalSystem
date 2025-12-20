@@ -4,9 +4,10 @@
 #include <QString>
 #include <QVector>
 
-class QSqlDatabase;
-
-// 数据库管理器：负责连接MySQL并查询users表、雨具表、借还记录表
+/**
+ * 数据库管理器（分布式版本）
+ * 通过 HTTP API 与服务器通信，不再直接访问数据库
+ */
 class DatabaseManager {
 public:
     struct UserRecord {
@@ -43,7 +44,7 @@ public:
         double cost;
     };
 
-    // 初始化数据库连接
+    // 初始化（检查服务器连接）
     static bool init();
 
     // ========== 用户相关 ==========
@@ -59,7 +60,7 @@ public:
     // 修改密码（已激活用户修改密码）
     static bool changeUserPassword(const QString &userId, const QString &oldPassword, const QString &newPassword);
 
-    // 更新用户余额
+    // 更新用户余额（分布式模式下不可用，余额通过借还操作自动管理）
     static bool updateUserBalance(const QString &userId, double amount);
 
     // ========== 站点相关 ==========
@@ -84,11 +85,4 @@ public:
 
     // 查询用户当前借出的雨具（未归还的记录）
     static std::optional<BorrowRecord> fetchUserCurrentBorrow(const QString &userId);
-
-private:
-    static QString connName();
-    static bool ensureConnectionOpen();
-    static QSqlDatabase connection();
 };
-
-

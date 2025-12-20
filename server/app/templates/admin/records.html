@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% set active_page = 'records' %}
+
+{% block title %}借还记录 - CampusRain{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">📋 借还记录</h1>
+    <p class="page-subtitle">查看系统借还历史</p>
+</div>
+
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <h3 class="card-title" style="margin: 0;">最近记录</h3>
+        <button class="btn btn-primary" onclick="loadRecords()">🔄 刷新</button>
+    </div>
+    <div class="table-container">
+        <table>
+            <thead>
+                <tr>
+                    <th>记录ID</th>
+                    <th>用户</th>
+                    <th>雨具</th>
+                    <th>类型</th>
+                    <th>借出时间</th>
+                    <th>归还时间</th>
+                    <th>费用</th>
+                    <th>状态</th>
+                </tr>
+            </thead>
+            <tbody id="recordsTable">
+                <tr><td colspan="8" class="loading"><div class="spinner"></div></td></tr>
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadRecords() {
+        const result = await apiRequest('/admin/api/records?limit=100');
+        const tbody = document.getElementById('recordsTable');
+        
+        if (result.success && result.data.length > 0) {
+            tbody.innerHTML = result.data.map(r => {
+                const isReturned = r.return_time !== null;
+                const statusBadge = isReturned
+                    ? '<span class="badge badge-success">已归还</span>'
+                    : '<span class="badge badge-warning">借出中</span>';
+                
+                return `
+                    <tr>
+                        <td>${r.record_id}</td>
+                        <td>${r.real_name || '-'} (${r.user_id})</td>
+                        <td>${r.gear_id}</td>
+                        <td>${r.type_name}</td>
+                        <td>${r.borrow_time}</td>
+                        <td>${r.return_time || '-'}</td>
+                        <td>${r.cost ? '¥' + parseFloat(r.cost).toFixed(2) : '-'}</td>
+                        <td>${statusBadge}</td>
+                    </tr>
+                `;
+            }).join('');
+        } else {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#a0aec0;">暂无记录</td></tr>';
+        }
+    }
+    
+    loadRecords();
+</script>
+{% endblock %}
+

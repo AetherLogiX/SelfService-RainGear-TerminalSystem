@@ -1,13 +1,13 @@
--- RainHub 校园智能共享雨具终端系统
+-- CampusRain 校园智能共享雨具系统
 -- 数据库初始化脚本 (MySQL 8.0)
 
 -- 创建数据库
-CREATE DATABASE IF NOT EXISTS rainhub_db_2 
+CREATE DATABASE IF NOT EXISTS campusrain_db 
     CHARACTER SET utf8mb4 
     COLLATE utf8mb4_unicode_ci;
 
 -- 使用数据库
-USE rainhub_db_2;
+USE campusrain_db;
 
 -- 1用户信息表 (users)
 CREATE TABLE IF NOT EXISTS users (

@@ -6,35 +6,35 @@
 #include <QPixmap>
 #include <QApplication>
 #include <QStyle>
+#include <QGraphicsDropShadowEffect>
 
 SlotItem::SlotItem(int index, QWidget *parent)
     : QWidget(parent)
     , m_index(index)
 {
     auto *mainLayout = new QVBoxLayout(this);
-    mainLayout->setContentsMargins(8, 8, 8, 8);
-    mainLayout->setSpacing(4);
+    mainLayout->setContentsMargins(12, 12, 12, 12);
+    mainLayout->setSpacing(8);
 
     m_iconLabel = new QLabel(this);
     m_iconLabel->setAlignment(Qt::AlignCenter);
     m_iconLabel->setFixedSize(72, 72);
-    // 允许缩放以完整显示图标，由 setIcon 中按比例缩放
     m_iconLabel->setScaledContents(false);
 
-    // 数字和状态指示器的水平布局
+    // 数字和状态指示器的布局
     auto *labelLayout = new QHBoxLayout();
     labelLayout->setContentsMargins(0, 0, 0, 0);
-    labelLayout->setSpacing(6);
+    labelLayout->setSpacing(8);
     labelLayout->setAlignment(Qt::AlignCenter);
 
     m_label = new QLabel(QStringLiteral("#%1").arg(index + 1), this);
     m_label->setAlignment(Qt::AlignCenter);
-    m_label->setStyleSheet("font-size: 12px; font-weight: 600; color: #333;");
+    m_label->setStyleSheet("font-size: 13px; font-weight: 600; color: #1a1a2e;");
 
-    // 状态指示器（小正方形）
+    // 状态指示器（圆形）
     m_statusIndicator = new QLabel(this);
-    m_statusIndicator->setFixedSize(12, 12);
-    m_statusIndicator->setStyleSheet("border: 1px solid #999; border-radius: 2px;");
+    m_statusIndicator->setFixedSize(14, 14);
+    m_statusIndicator->setStyleSheet("border-radius: 7px; background-color: #bdc3c7;");
 
     labelLayout->addWidget(m_label);
     labelLayout->addWidget(m_statusIndicator);
@@ -42,11 +42,9 @@ SlotItem::SlotItem(int index, QWidget *parent)
     mainLayout->addWidget(m_iconLabel, 0, Qt::AlignCenter);
     mainLayout->addLayout(labelLayout);
 
-    setMinimumSize(120, 120);
+    setMinimumSize(140, 140);
+    setCursor(Qt::PointingHandCursor);
     setState(State::Available);
-    
-    // 设置整体背景为白色
-    setStyleSheet("SlotItem { background-color: white; border-radius: 8px; border: 1px solid #ddd; }");
 }
 
 void SlotItem::setState(State state)
@@ -79,63 +77,70 @@ void SlotItem::setIcon(const QPixmap &pixmap, const QString &descText)
 void SlotItem::setGearTypeName(const QString &typeName)
 {
     QString currentText = m_label->text();
-    // 如果当前文本包含#号，保留#号部分，添加类型名称
     if (currentText.startsWith("#")) {
         m_label->setText(QStringLiteral("%1\n%2").arg(currentText).arg(typeName));
     } else {
         m_label->setText(QStringLiteral("%1\n%2").arg(QStringLiteral("#%1").arg(m_index + 1)).arg(typeName));
     }
-    m_label->setStyleSheet("font-size: 11px; font-weight: 500; color: #333;");
+    m_label->setStyleSheet("font-size: 11px; font-weight: 600; color: #4a4a68; line-height: 1.3;");
 }
 
 void SlotItem::refreshStyle()
 {
     QString indicatorColor;
+    QString bgGradient;
     QString borderColor;
+    
     switch (m_state) {
     case State::Available:   
-        indicatorColor = "#2ecc71"; // green - 可借
-        borderColor = "#2ecc71";
+        indicatorColor = "#00d68f";
+        borderColor = "#00d68f";
+        bgGradient = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ffffff, stop:1 #f0fff5)";
         break;
     case State::Empty:       
-        indicatorColor = "#bdc3c7"; // gray - 空槽/可还
-        borderColor = "#bdc3c7";
+        indicatorColor = "#bdc3c7";
+        borderColor = "#e4e9f2";
+        bgGradient = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ffffff, stop:1 #f8f9fa)";
         break;
     case State::Maintenance: 
-        indicatorColor = "#e74c3c"; // red - 故障
-        borderColor = "#e74c3c";
+        indicatorColor = "#ff3d71";
+        borderColor = "#ff3d71";
+        bgGradient = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #ffffff, stop:1 #fff5f5)";
         break;
     case State::Selected:    
-        indicatorColor = "#f1c40f"; // yellow - 选中
-        borderColor = "#f1c40f";
+        indicatorColor = "#667eea";
+        borderColor = "#667eea";
+        bgGradient = "qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #f8f5ff, stop:1 #f0ebff)";
         break;
     }
 
-    // 设置状态指示器的颜色（小正方形）
+    // 状态指示器（圆形）
     m_statusIndicator->setStyleSheet(QStringLiteral(
         "QLabel { "
         "background-color: %1; "
-        "border: 1px solid rgba(0,0,0,0.2); "
-        "border-radius: 2px; "
-        "min-width: 12px; "
-        "min-height: 12px; "
-        "max-width: 12px; "
-        "max-height: 12px; "
+        "border: none; "
+        "border-radius: 7px; "
+        "min-width: 14px; "
+        "min-height: 14px; "
+        "max-width: 14px; "
+        "max-height: 14px; "
         "}").arg(indicatorColor));
     
-    // 先清除旧样式，再设置新样式，确保样式立即生效
+    // 清除旧样式
     setStyleSheet("");
     QApplication::processEvents();
     
-    // 设置整体边框颜色
+    // 设置现代化卡片样式
     setStyleSheet(QStringLiteral(
         "SlotItem { "
-        "background-color: white; "
-        "border-radius: 8px; "
-        "border: 2px solid %1; "
-        "}").arg(borderColor));
+        "background: %1; "
+        "border-radius: 16px; "
+        "border: 2px solid %2; "
+        "}"
+        "SlotItem:hover { "
+        "border-width: 3px; "
+        "}").arg(bgGradient, borderColor));
     
-    // 强制刷新样式和布局
     style()->unpolish(this);
     style()->polish(this);
     update();

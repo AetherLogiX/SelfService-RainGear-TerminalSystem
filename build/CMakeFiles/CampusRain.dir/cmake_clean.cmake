@@ -1,0 +1,40 @@
+file(REMOVE_RECURSE
+  "CMakeFiles/CampusRain_autogen.dir/AutogenUsed.txt"
+  "CMakeFiles/CampusRain_autogen.dir/ParseCache.txt"
+  "CampusRain_autogen"
+  "CMakeFiles/CampusRain.dir/CampusRain_autogen/LFMT4ZCNZA/qrc_icons.cpp.obj"
+  "CMakeFiles/CampusRain.dir/CampusRain_autogen/LFMT4ZCNZA/qrc_icons.cpp.obj.d"
+  "CMakeFiles/CampusRain.dir/CampusRain_autogen/UQEM7VAMAL/qrc_map.cpp.obj"
+  "CMakeFiles/CampusRain.dir/CampusRain_autogen/UQEM7VAMAL/qrc_map.cpp.obj.d"
+  "CMakeFiles/CampusRain.dir/CampusRain_autogen/mocs_compilation.cpp.obj"
+  "CMakeFiles/CampusRain.dir/CampusRain_autogen/mocs_compilation.cpp.obj.d"
+  "CMakeFiles/CampusRain.dir/Control/ApiClient.cpp.obj"
+  "CMakeFiles/CampusRain.dir/Control/ApiClient.cpp.obj.d"
+  "CMakeFiles/CampusRain.dir/Control/DatabaseManager.cpp.obj"
+  "CMakeFiles/CampusRain.dir/Control/DatabaseManager.cpp.obj.d"
+  "CMakeFiles/CampusRain.dir/Model/StationUtils.cpp.obj"
+  "CMakeFiles/CampusRain.dir/Model/StationUtils.cpp.obj.d"
+  "CMakeFiles/CampusRain.dir/Model/Stationlocal.cpp.obj"
+  "CMakeFiles/CampusRain.dir/Model/Stationlocal.cpp.obj.d"
+  "CMakeFiles/CampusRain.dir/Model/User.cpp.obj"
+  "CMakeFiles/CampusRain.dir/Model/User.cpp.obj.d"
+  "CMakeFiles/CampusRain.dir/client/MainWindow.cpp.obj"
+  "CMakeFiles/CampusRain.dir/client/MainWindow.cpp.obj.d"
+  "CMakeFiles/CampusRain.dir/client/SlotItem.cpp.obj"
+  "CMakeFiles/CampusRain.dir/client/SlotItem.cpp.obj.d"
+  "CMakeFiles/CampusRain.dir/client/main.cpp.obj"
+  "CMakeFiles/CampusRain.dir/client/main.cpp.obj.d"
+  "CampusRain_autogen/LFMT4ZCNZA/qrc_icons.cpp"
+  "CampusRain_autogen/UQEM7VAMAL/qrc_map.cpp"
+  "CampusRain_autogen/mocs_compilation.cpp"
+  "CampusRain_autogen/timestamp"
+  "bin/CampusRain.exe"
+  "bin/CampusRain.exe.manifest"
+  "bin/CampusRain.pdb"
+  "libCampusRain.dll.a"
+)
+
+# Per-language clean rules from dependency scanning.
+foreach(lang CXX)
+  include(CMakeFiles/CampusRain.dir/cmake_clean_${lang}.cmake OPTIONAL)
+endforeach()

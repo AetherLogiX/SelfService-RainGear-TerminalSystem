@@ -1,5 +1,5 @@
 # Hashes of file build rules.
-58b5ab3e68d28c4683450aeffb8577c2 CMakeFiles/RainHub_autogen
-726be0872a1600713a571a6031763a39 RainHub_autogen/LFMT4ZCNZA/qrc_icons.cpp
-29f6ae73666bdd42cc90a9e7b9747c39 RainHub_autogen/UQEM7VAMAL/qrc_map.cpp
-4983be4f79438e570015054ebbea6de8 RainHub_autogen/timestamp
+c2b8c0d2a1deec5cec73d68265f18fa3 CMakeFiles/CampusRain_autogen
+1eaaba7279e8f6b634cad50050f5ef88 CampusRain_autogen/LFMT4ZCNZA/qrc_icons.cpp
+5c93b6a3d87c48acaccf45fef68239a2 CampusRain_autogen/UQEM7VAMAL/qrc_map.cpp
+a6d412104890fd0c1b410e764812162f CampusRain_autogen/timestamp

@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% set active_page = 'stations' %}
+
+{% block title %}站点管理 - CampusRain{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1 class="page-title">🏢 站点管理</h1>
+    <p class="page-subtitle">查看各站点库存状态</p>
+</div>
+
+<!-- 站点卡片网格 -->
+<div id="stationsGrid" class="stats-grid" style="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));">
+    <div class="loading"><div class="spinner"></div></div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    async function loadStations() {
+        const result = await apiRequest('/admin/api/stations');
+        const grid = document.getElementById('stationsGrid');
+        
+        if (result.success) {
+            grid.innerHTML = result.data.map(s => `
+                <div class="card" style="margin: 0;">
+                    <h3 class="card-title" style="font-size: 18px;">
+                        🏢 ${s.name}
+                        ${s.status === 1 
+                            ? '<span class="badge badge-success" style="margin-left:auto;">运行中</span>' 
+                            : '<span class="badge badge-danger" style="margin-left:auto;">维护中</span>'}
+                    </h3>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 15px;">
+                        <div style="text-align: center; padding: 15px; background: #f8fafc; border-radius: 10px;">
+                            <div style="font-size: 24px;">☔</div>
+                            <div style="font-size: 20px; font-weight: 600; color: #667eea;">${s.inventory.plastic_umbrella}</div>
+                            <div style="font-size: 12px; color: #a0aec0;">普通塑料伞</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f8fafc; border-radius: 10px;">
+                            <div style="font-size: 24px;">🌂</div>
+                            <div style="font-size: 20px; font-weight: 600; color: #5a67d8;">${s.inventory.windproof_umbrella}</div>
+                            <div style="font-size: 12px; color: #a0aec0;">抗风伞</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f8fafc; border-radius: 10px;">
+                            <div style="font-size: 24px;">🏖️</div>
+                            <div style="font-size: 20px; font-weight: 600; color: #ed8936;">${s.inventory.sunshade_umbrella}</div>
+                            <div style="font-size: 12px; color: #a0aec0;">遮阳伞</div>
+                        </div>
+                        <div style="text-align: center; padding: 15px; background: #f8fafc; border-radius: 10px;">
+                            <div style="font-size: 24px;">🧥</div>
+                            <div style="font-size: 20px; font-weight: 600; color: #48bb78;">${s.inventory.raincoat}</div>
+                            <div style="font-size: 12px; color: #a0aec0;">雨衣</div>
+                        </div>
+                    </div>
+                    <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-around;">
+                        <div style="text-align: center;">
+                            <span class="badge badge-success">${s.inventory.total_available}</span>
+                            <div style="font-size: 11px; color: #a0aec0; margin-top: 3px;">可用</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <span class="badge badge-warning">${s.inventory.total_borrowed}</span>
+                            <div style="font-size: 11px; color: #a0aec0; margin-top: 3px;">借出</div>
+                        </div>
+                        <div style="text-align: center;">
+                            <span class="badge badge-danger">${s.inventory.total_damaged}</span>
+                            <div style="font-size: 11px; color: #a0aec0; margin-top: 3px;">故障</div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+    }
+    
+    loadStations();
+    setInterval(loadStations, 30000);
+</script>
+{% endblock %}
+
