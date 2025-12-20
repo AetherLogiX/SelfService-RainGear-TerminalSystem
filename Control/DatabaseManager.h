@@ -72,6 +72,18 @@ public:
 
     // 根据gear_id查询雨具信息
     static std::optional<GearRecord> fetchGearById(const QString &gearId);
+    
+    // 添加雨具到数据库（管理员功能）
+    // gearId: 雨具唯一编码（RFID芯片号）
+    // typeId: 类型ID (1:普通塑料伞, 2:高质量抗风伞, 3:专用遮阳伞, 4:雨衣)
+    // stationId: 站点ID
+    // slotId: 槽位ID (1-12)
+    // 返回值：成功返回true，失败返回false
+    static bool addGear(const QString &gearId, int typeId, int stationId, int slotId);
+    
+    // 删除雨具（管理员功能）
+    // 返回值：成功返回true，失败返回false
+    static bool removeGear(const QString &gearId);
 
     // ========== 借还操作 ==========
     // 借伞：更新雨具状态、扣除押金、创建借还记录
@@ -84,6 +96,15 @@ public:
 
     // 查询用户当前借出的雨具（未归还的记录）
     static std::optional<BorrowRecord> fetchUserCurrentBorrow(const QString &userId);
+    
+    // 查询所有用户（管理员功能）
+    static QVector<UserRecord> fetchAllUsers();
+    
+    // 重置用户密码（管理员功能）
+    static bool resetUserPassword(const QString &userId, const QString &newPassword);
+    
+    // 更新雨具状态（管理员功能）
+    static bool updateGearStatus(const QString &gearId, int newStatus);
 
 private:
     static QString connName();

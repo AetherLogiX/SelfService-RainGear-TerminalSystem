@@ -319,6 +319,181 @@ std::optional<DatabaseManager::GearRecord> DatabaseManager::fetchGearById(const 
     return std::nullopt;
 }
 
+// ========== 雨具管理（管理员功能） ==========
+bool DatabaseManager::addGear(const QString &gearId, int typeId, int stationId, int slotId)
+{
+    if (gearId.trimmed().isEmpty()) {
+        qWarning() << "[DB] 雨具ID不能为空";
+        return false;
+    }
+    
+    if (typeId < 1 || typeId > 4) {
+        qWarning() << "[DB] 雨具类型ID无效:" << typeId;
+        return false;
+    }
+    
+    if (slotId < 1 || slotId > 12) {
+        qWarning() << "[DB] 槽位ID无效:" << slotId << "，范围应为1-12";
+        return false;
+    }
+    
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return false;
+    }
+    
+    // 开启事务
+    if (!db.transaction()) {
+        qWarning() << "[DB] 无法开启事务";
+        return false;
+    }
+    
+    QSqlQuery query(db);
+    
+    try {
+        // 1. 检查雨具ID是否已存在
+        query.prepare(QStringLiteral("SELECT COUNT(*) FROM raingear WHERE gear_id = :gid"));
+        query.bindValue(":gid", gearId.trimmed());
+        if (!query.exec() || !query.next()) {
+            qWarning() << "[DB] 检查雨具ID失败";
+            db.rollback();
+            return false;
+        }
+        if (query.value(0).toInt() > 0) {
+            qWarning() << "[DB] 雨具ID已存在:" << gearId;
+            db.rollback();
+            return false;
+        }
+        
+        // 2. 检查站点是否存在
+        query.prepare(QStringLiteral("SELECT COUNT(*) FROM station WHERE station_id = :sid"));
+        query.bindValue(":sid", stationId);
+        if (!query.exec() || !query.next()) {
+            qWarning() << "[DB] 检查站点失败";
+            db.rollback();
+            return false;
+        }
+        if (query.value(0).toInt() == 0) {
+            qWarning() << "[DB] 站点不存在:" << stationId;
+            db.rollback();
+            return false;
+        }
+        
+        // 3. 检查槽位是否已被占用
+        query.prepare(QStringLiteral(
+            "SELECT COUNT(*) FROM raingear WHERE station_id = :sid AND slot_id = :slid"));
+        query.bindValue(":sid", stationId);
+        query.bindValue(":slid", slotId);
+        if (!query.exec() || !query.next()) {
+            qWarning() << "[DB] 检查槽位失败";
+            db.rollback();
+            return false;
+        }
+        if (query.value(0).toInt() > 0) {
+            qWarning() << "[DB] 槽位已被占用，station_id:" << stationId << "slot_id:" << slotId;
+            db.rollback();
+            return false;
+        }
+        
+        // 4. 插入新雨具
+        query.prepare(QStringLiteral(
+            "INSERT INTO raingear (gear_id, type_id, station_id, slot_id, status) "
+            "VALUES (:gid, :tid, :sid, :slid, 1)"));
+        query.bindValue(":gid", gearId.trimmed());
+        query.bindValue(":tid", typeId);
+        query.bindValue(":sid", stationId);
+        query.bindValue(":slid", slotId);
+        
+        if (!query.exec()) {
+            qWarning() << "[DB] 插入雨具失败:" << query.lastError().text();
+            db.rollback();
+            return false;
+        }
+        
+        // 提交事务
+        if (!db.commit()) {
+            qWarning() << "[DB] 提交事务失败";
+            db.rollback();
+            return false;
+        }
+        
+        qInfo() << "[DB] 添加雨具成功: gear_id=" << gearId << "type_id=" << typeId 
+                << "station_id=" << stationId << "slot_id=" << slotId;
+        return true;
+        
+    } catch (...) {
+        db.rollback();
+        qWarning() << "[DB] 添加雨具操作异常，已回滚";
+        return false;
+    }
+}
+
+bool DatabaseManager::removeGear(const QString &gearId)
+{
+    if (gearId.trimmed().isEmpty()) {
+        qWarning() << "[DB] 雨具ID不能为空";
+        return false;
+    }
+    
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return false;
+    }
+    
+    // 开启事务
+    if (!db.transaction()) {
+        qWarning() << "[DB] 无法开启事务";
+        return false;
+    }
+    
+    QSqlQuery query(db);
+    
+    try {
+        // 1. 检查雨具是否存在
+        query.prepare(QStringLiteral("SELECT status FROM raingear WHERE gear_id = :gid LIMIT 1"));
+        query.bindValue(":gid", gearId.trimmed());
+        if (!query.exec() || !query.next()) {
+            qWarning() << "[DB] 雨具不存在:" << gearId;
+            db.rollback();
+            return false;
+        }
+        
+        int status = query.value(0).toInt();
+        if (status == 2) { // 已借出
+            qWarning() << "[DB] 无法删除已借出的雨具:" << gearId;
+            db.rollback();
+            return false;
+        }
+        
+        // 2. 删除雨具
+        query.prepare(QStringLiteral("DELETE FROM raingear WHERE gear_id = :gid"));
+        query.bindValue(":gid", gearId.trimmed());
+        
+        if (!query.exec()) {
+            qWarning() << "[DB] 删除雨具失败:" << query.lastError().text();
+            db.rollback();
+            return false;
+        }
+        
+        // 提交事务
+        if (!db.commit()) {
+            qWarning() << "[DB] 提交事务失败";
+            db.rollback();
+            return false;
+        }
+        
+        qInfo() << "[DB] 删除雨具成功: gear_id=" << gearId;
+        return true;
+        
+    } catch (...) {
+        db.rollback();
+        qWarning() << "[DB] 删除雨具操作异常，已回滚";
+        return false;
+    }
+}
+
 // ========== 借还操作 ==========
 bool DatabaseManager::borrowGear(const QString &userId, const QString &gearId, int stationId, int slotId, double deposit)
 {
@@ -581,6 +756,100 @@ std::optional<DatabaseManager::BorrowRecord> DatabaseManager::fetchUserCurrentBo
     }
     
     return std::nullopt;
+}
+
+// ========== 管理员功能 ==========
+QVector<DatabaseManager::UserRecord> DatabaseManager::fetchAllUsers()
+{
+    QVector<UserRecord> users;
+    
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return users;
+    }
+
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral(
+        "SELECT user_id, real_name, credit, role, is_active, password "
+        "FROM users ORDER BY user_id"));
+
+    if (!query.exec()) {
+        qWarning() << "[DB] 查询用户失败:" << query.lastError().text();
+        return users;
+    }
+
+    while (query.next()) {
+        UserRecord rec;
+        rec.userId = query.value(0).toString();
+        rec.realName = query.value(1).toString();
+        rec.credit = query.value(2).toDouble();
+        rec.role = query.value(3).toInt();
+        rec.isActive = query.value(4).toBool();
+        rec.password = query.value(5).toString();
+        users.append(rec);
+    }
+
+    return users;
+}
+
+bool DatabaseManager::resetUserPassword(const QString &userId, const QString &newPassword)
+{
+    if (userId.trimmed().isEmpty() || newPassword.isEmpty()) {
+        qWarning() << "[DB] 空账号或密码";
+        return false;
+    }
+
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return false;
+    }
+
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral("UPDATE users SET password = :pwd WHERE user_id = :uid"));
+    query.bindValue(":pwd", newPassword);
+    query.bindValue(":uid", userId.trimmed());
+    
+    if (!query.exec()) {
+        qWarning() << "[DB] 重置密码失败:" << query.lastError().text();
+        return false;
+    }
+    
+    qInfo() << "[DB] 管理员重置用户" << userId << "的密码";
+    return true;
+}
+
+bool DatabaseManager::updateGearStatus(const QString &gearId, int newStatus)
+{
+    if (gearId.trimmed().isEmpty()) {
+        qWarning() << "[DB] 雨具ID不能为空";
+        return false;
+    }
+    
+    if (newStatus < 1 || newStatus > 3) {
+        qWarning() << "[DB] 状态值无效:" << newStatus;
+        return false;
+    }
+    
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return false;
+    }
+    
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral("UPDATE raingear SET status = :status WHERE gear_id = :gid"));
+    query.bindValue(":status", newStatus);
+    query.bindValue(":gid", gearId.trimmed());
+    
+    if (!query.exec()) {
+        qWarning() << "[DB] 更新雨具状态失败:" << query.lastError().text();
+        return false;
+    }
+    
+    qInfo() << "[DB] 管理员更新雨具" << gearId << "状态为" << newStatus;
+    return true;
 }
 
 
