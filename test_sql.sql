@@ -1,4 +1,4 @@
-use rainhub_db;
+use rainhub_db_2;
 show tables;
 select * from users;
 select * from raingear;
