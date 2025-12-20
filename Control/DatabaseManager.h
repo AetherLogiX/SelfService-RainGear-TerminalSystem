@@ -46,8 +46,7 @@ public:
     // 初始化数据库连接
     static bool init();
 
-    // ========== 用户相关 ==========
-    // 查询指定学号/工号与姓名的用户（用于首次登录识别）
+    //用户相关 ,查询指定学号/工号与姓名的用户（用于首次登录识别）
     static std::optional<UserRecord> fetchUserByIdAndName(const QString &userId, const QString &realName);
     
     // 查询账号/姓名/密码（明文密码，不使用哈希）
@@ -62,13 +61,14 @@ public:
     // 更新用户余额
     static bool updateUserBalance(const QString &userId, double amount);
 
-    // ========== 站点相关 ==========
-    // 获取所有站点列表
+    //站点相关,获取所有站点列表
     static QVector<StationRecord> fetchAllStations();
 
-    // ========== 雨具相关 ==========
-    // 根据站点ID查询该站点的所有雨具（包括槽位信息）
+    //雨具相关,根据站点ID查询该站点的所有雨具（包括槽位信息）
     static QVector<GearRecord> fetchGearsByStation(int stationId);
+    
+    // 查询所有雨具（包括已借出的）
+    static QVector<GearRecord> fetchAllGears();
 
     // 根据gear_id查询雨具信息
     static std::optional<GearRecord> fetchGearById(const QString &gearId);
@@ -85,7 +85,7 @@ public:
     // 返回值：成功返回true，失败返回false
     static bool removeGear(const QString &gearId);
 
-    // ========== 借还操作 ==========
+    // 借还操作
     // 借伞：更新雨具状态、扣除押金、创建借还记录
     // 返回值：成功返回true，失败返回false
     static bool borrowGear(const QString &userId, const QString &gearId, int stationId, int slotId, double deposit);

@@ -32,7 +32,6 @@ ON DUPLICATE KEY UPDATE name=name;
 -- 雨具数据全部迁移到 data_insert2.0.sql，避免像之前一样重复插入...
 -- 本脚本仅保留用户和站点数据
 
-
 SELECT 'Data initialization completed successfully!' AS message;
 SELECT COUNT(*) AS user_count FROM users;
 SELECT COUNT(*) AS station_count FROM station;

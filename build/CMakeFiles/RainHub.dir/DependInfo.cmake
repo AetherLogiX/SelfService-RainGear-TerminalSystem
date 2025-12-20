@@ -10,7 +10,6 @@ set(CMAKE_DEPENDS_LANGUAGES
 set(CMAKE_DEPENDS_DEPENDENCY_FILES
   "" "RainHub_autogen/timestamp" "custom" "RainHub_autogen/deps"
   "C:/Users/hdcqW/Desktop/Rainhub/Control/DatabaseManager.cpp" "CMakeFiles/RainHub.dir/Control/DatabaseManager.cpp.obj" "gcc" "CMakeFiles/RainHub.dir/Control/DatabaseManager.cpp.obj.d"
-  "C:/Users/hdcqW/Desktop/Rainhub/Control/SystemManger.cpp" "CMakeFiles/RainHub.dir/Control/SystemManger.cpp.obj" "gcc" "CMakeFiles/RainHub.dir/Control/SystemManger.cpp.obj.d"
   "C:/Users/hdcqW/Desktop/Rainhub/Model/StationUtils.cpp" "CMakeFiles/RainHub.dir/Model/StationUtils.cpp.obj" "gcc" "CMakeFiles/RainHub.dir/Model/StationUtils.cpp.obj.d"
   "C:/Users/hdcqW/Desktop/Rainhub/Model/Stationlocal.cpp" "CMakeFiles/RainHub.dir/Model/Stationlocal.cpp.obj" "gcc" "CMakeFiles/RainHub.dir/Model/Stationlocal.cpp.obj.d"
   "C:/Users/hdcqW/Desktop/Rainhub/Model/User.cpp" "CMakeFiles/RainHub.dir/Model/User.cpp.obj" "gcc" "CMakeFiles/RainHub.dir/Model/User.cpp.obj.d"

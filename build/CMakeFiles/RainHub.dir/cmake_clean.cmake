@@ -4,8 +4,6 @@ file(REMOVE_RECURSE
   "RainHub_autogen"
   "CMakeFiles/RainHub.dir/Control/DatabaseManager.cpp.obj"
   "CMakeFiles/RainHub.dir/Control/DatabaseManager.cpp.obj.d"
-  "CMakeFiles/RainHub.dir/Control/SystemManger.cpp.obj"
-  "CMakeFiles/RainHub.dir/Control/SystemManger.cpp.obj.d"
   "CMakeFiles/RainHub.dir/Model/StationUtils.cpp.obj"
   "CMakeFiles/RainHub.dir/Model/StationUtils.cpp.obj.d"
   "CMakeFiles/RainHub.dir/Model/Stationlocal.cpp.obj"

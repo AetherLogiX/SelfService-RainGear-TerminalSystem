@@ -33,6 +33,15 @@ MainWindow::MainWindow(QWidget *parent)
     switchPage(Page::Welcome);
     setWindowTitle("RainHub Client");
     resize(900, 700);
+    
+    // 创建定时刷新器（每3秒刷新一次，实现实时同步）
+    m_syncTimer = new QTimer(this);
+    connect(m_syncTimer, &QTimer::timeout, this, [this]() {
+        // 如果当前在借还页面，刷新槽位状态
+        if (m_stack && m_stack->currentIndex() == static_cast<int>(Page::Borrow) && m_currentStationId > 0) {
+            refreshSlotsFromDatabase();
+        }
+    });
 }
 
 void MainWindow::setupUi()
@@ -194,7 +203,13 @@ QWidget* MainWindow::createUserInputPage()
             return;
         }
 
-        qDebug() << "[UserInput] 找到用户, is_active:" << record->isActive;
+        qDebug() << "[UserInput] 找到用户, is_active:" << record->isActive << ", role:" << record->role;
+
+        // 阻止管理员账号通过客户端登录
+        if (record->role == 9) {
+            QMessageBox::warning(this, tr("权限错误"), tr("管理员账号请使用管理员后台登录。"));
+            return;
+        }
 
         // 保存临时用户信息
         m_tempUserId = userId;
@@ -730,18 +745,18 @@ QWidget* MainWindow::createMapPage()
     topBar->addWidget(btnBack);
 
     // 地图容器（使用QWidget作为画布，不使用真实地图图片）
-    auto *mapContainer = new QWidget(page);
-    mapContainer->setMinimumSize(800, 600);
-    mapContainer->setStyleSheet(
+    m_mapContainer = new QWidget(page);
+    m_mapContainer->setMinimumSize(800, 600);
+    m_mapContainer->setStyleSheet(
         "background-color: #ecf0f1; "
         "border: 2px solid #bdc3c7; "
         "border-radius: 8px;");
     
     // 从数据库加载站点数据并绘制
-    loadMapStations(mapContainer);
+    loadMapStations(m_mapContainer);
 
     layout->addLayout(topBar);
-    layout->addWidget(mapContainer, 1);
+    layout->addWidget(m_mapContainer, 1);
     return page;
 }
 
@@ -852,14 +867,34 @@ void MainWindow::switchPage(Page page)
         if (m_currentStationId > 0) {
             refreshSlotsFromDatabase();
             populateSlots(m_borrowMode);
+            // 开始定时刷新（实现实时同步）
+            if (m_syncTimer) {
+                m_syncTimer->start(3000); // 每3秒刷新一次
+            }
         } else {
             // 如果没有选择站点，先显示空槽位
             for (auto *slot : m_slots) {
                 slot->setState(SlotItem::State::Empty);
                 slot->setEnabled(false);
             }
+            // 停止定时刷新
+            if (m_syncTimer) {
+                m_syncTimer->stop();
+            }
         }
-    } else if (page == Page::Login && m_loginUserInfoLabel) {
+    } else {
+        // 离开借还页面时停止定时刷新
+        if (m_syncTimer) {
+            m_syncTimer->stop();
+        }
+    }
+    
+    // 切换到地图页面时刷新数据
+    if (page == Page::Map && m_mapContainer) {
+        loadMapStations(m_mapContainer);
+    }
+    
+    if (page == Page::Login && m_loginUserInfoLabel) {
         // 切换到密码登录页面时，更新显示的用户信息
         QString infoText = tr("学号/工号：%1\n姓名：%2")
             .arg(m_tempUserId.isEmpty() ? tr("未知") : m_tempUserId)
@@ -1224,6 +1259,12 @@ void MainWindow::loadMapStations(QWidget *mapContainer)
 {
     if (!mapContainer) return;
     
+    // 清除旧的站点按钮和标签（立即删除，不用 deleteLater）
+    QList<QWidget*> children = mapContainer->findChildren<QWidget*>(QString(), Qt::FindDirectChildrenOnly);
+    for (auto *child : children) {
+        delete child;
+    }
+    
     if (!DatabaseManager::init()) {
         qWarning() << "[MainWindow] 数据库连接失败，无法加载站点";
         return;
@@ -1263,6 +1304,12 @@ void MainWindow::loadMapStations(QWidget *mapContainer)
             }
         }
     }
+    
+    // 获取容器尺寸（如果尺寸为0，使用默认值）
+    int containerWidth = mapContainer->width();
+    int containerHeight = mapContainer->height();
+    if (containerWidth < 100) containerWidth = 800;
+    if (containerHeight < 100) containerHeight = 600;
     
     // 根据数据库中的坐标绘制站点
     for (const auto &station : allStations) {
@@ -1320,16 +1367,28 @@ void MainWindow::loadMapStations(QWidget *mapContainer)
         nameLabel->setAlignment(Qt::AlignCenter);
         nameLabel->adjustSize();
         
-        // 使用定时器延迟设置位置（确保mapContainer已经完成布局）
-        QTimer::singleShot(100, this, [mapContainer, stationBtn, nameLabel, posX, posY]() {
-            int containerWidth = mapContainer->width();
-            int containerHeight = mapContainer->height();
+        // 计算位置并立即设置
+        int x = static_cast<int>(containerWidth * posX) - 12;
+        int y = static_cast<int>(containerHeight * posY) - 12;
+        stationBtn->move(x, y);
+        nameLabel->move(x - nameLabel->width() / 2 + 12, y + 28);
+        
+        // 显示控件
+        stationBtn->show();
+        nameLabel->show();
+        
+        // 延迟再次调整位置（确保容器布局完成后位置正确）
+        QTimer::singleShot(200, this, [mapContainer, stationBtn, nameLabel, posX, posY]() {
+            if (!mapContainer || !stationBtn || !nameLabel) return;
+            int w = mapContainer->width();
+            int h = mapContainer->height();
+            if (w < 100 || h < 100) return;
             
-            int x = static_cast<int>(containerWidth * posX) - 12; // 减去按钮半径
-            int y = static_cast<int>(containerHeight * posY) - 12;
+            int newX = static_cast<int>(w * posX) - 12;
+            int newY = static_cast<int>(h * posY) - 12;
             
-            stationBtn->move(x, y);
-            nameLabel->move(x - nameLabel->width() / 2 + 12, y + 28); // 放在按钮下方
+            stationBtn->move(newX, newY);
+            nameLabel->move(newX - nameLabel->width() / 2 + 12, newY + 28);
         });
     }
     

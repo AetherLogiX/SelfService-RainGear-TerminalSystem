@@ -44,10 +44,6 @@ private:
     void handleLogout();
     void switchPage(Page page);
     
-    // 地图相关
-    void loadMapStations(QWidget *mapContainer);
-    void onStationClicked(int stationId);
-    
     // 数据刷新
     void refreshDashboardData();
     void refreshGearManageData();
@@ -84,6 +80,7 @@ private:
     QLabel *m_onlineDevicesLabel { nullptr };
     QLabel *m_borrowedGearsLabel { nullptr };
     QLabel *m_faultCountLabel { nullptr };
+    QTableWidget *m_stationTable { nullptr }; // 站点概览表格
     
     // 雨具管理
     QComboBox *m_gearStationCombo { nullptr };

@@ -287,6 +287,40 @@ QVector<DatabaseManager::GearRecord> DatabaseManager::fetchGearsByStation(int st
     return gears;
 }
 
+QVector<DatabaseManager::GearRecord> DatabaseManager::fetchAllGears()
+{
+    QVector<GearRecord> gears;
+    
+    QSqlDatabase db = DBHelper::getThreadLocalConnection();
+    if (!db.isOpen()) {
+        qWarning() << "[DB] 数据库连接失败";
+        return gears;
+    }
+
+    QSqlQuery query(db);
+    // 查询所有雨具，包括已借出的（station_id 为 NULL）
+    query.prepare(QStringLiteral(
+        "SELECT gear_id, type_id, COALESCE(station_id, 0), COALESCE(slot_id, 0), status "
+        "FROM raingear ORDER BY gear_id"));
+    
+    if (!query.exec()) {
+        qWarning() << "[DB] 查询所有雨具失败:" << query.lastError().text();
+        return gears;
+    }
+
+    while (query.next()) {
+        GearRecord rec;
+        rec.gearId = query.value(0).toString();
+        rec.typeId = query.value(1).toInt();
+        rec.stationId = query.value(2).toInt();
+        rec.slotId = query.value(3).toInt();
+        rec.status = query.value(4).toInt();
+        gears.append(rec);
+    }
+    
+    return gears;
+}
+
 std::optional<DatabaseManager::GearRecord> DatabaseManager::fetchGearById(const QString &gearId)
 {
     QSqlDatabase db = DBHelper::getThreadLocalConnection();

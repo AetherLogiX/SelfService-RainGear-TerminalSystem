@@ -160,19 +160,12 @@ QWidget* AdminMainWindow::createDashboardPage()
 
     // 左侧导航栏
     auto *sidebar = new QWidget(page);
-    sidebar->setFixedWidth(200);
+    sidebar->setMinimumWidth(200);
+    sidebar->setMaximumWidth(200);
     sidebar->setStyleSheet(
         "QWidget { background-color: #34495e; }"
-        "QPushButton { "
-        "  text-align: left; "
-        "  padding: 15px 20px; "
-        "  font-size: 14px; "
-        "  color: white; "
-        "  border: none; "
-        "  background-color: transparent; "
-        "}"
+        "QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; }"
         "QPushButton:hover { background-color: #2c3e50; }"
-        "QPushButton:pressed { background-color: #1a252f; }"
     );
     auto *sidebarLayout = new QVBoxLayout(sidebar);
     sidebarLayout->setContentsMargins(0, 0, 0, 0);
@@ -180,22 +173,22 @@ QWidget* AdminMainWindow::createDashboardPage()
     
     // 导航按钮
     auto *btnDashboard = new QPushButton(tr("📊 首页概览"), sidebar);
-    btnDashboard->setStyleSheet("QPushButton { background-color: #2c3e50; }");
+    btnDashboard->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: #2c3e50; }");
     connect(btnDashboard, &QPushButton::clicked, this, [this] { switchPage(Page::Dashboard); });
     
-    m_navGearManage = new QPushButton(tr("☂️ 雨具管理"), sidebar);
-    connect(m_navGearManage, &QPushButton::clicked, this, [this] { switchPage(Page::GearManage); });
+    auto *btnGear = new QPushButton(tr("☂️ 雨具管理"), sidebar);
+    connect(btnGear, &QPushButton::clicked, this, [this] { switchPage(Page::GearManage); });
     
-    m_navUserManage = new QPushButton(tr("👤 用户管理"), sidebar);
-    connect(m_navUserManage, &QPushButton::clicked, this, [this] { switchPage(Page::UserManage); });
+    auto *btnUser = new QPushButton(tr("👤 用户管理"), sidebar);
+    connect(btnUser, &QPushButton::clicked, this, [this] { switchPage(Page::UserManage); });
     
-    m_navOrderManage = new QPushButton(tr("📋 订单/流水"), sidebar);
-    connect(m_navOrderManage, &QPushButton::clicked, this, [this] { switchPage(Page::OrderManage); });
+    auto *btnOrder = new QPushButton(tr("📋 订单/流水"), sidebar);
+    connect(btnOrder, &QPushButton::clicked, this, [this] { switchPage(Page::OrderManage); });
     
     sidebarLayout->addWidget(btnDashboard);
-    sidebarLayout->addWidget(m_navGearManage);
-    sidebarLayout->addWidget(m_navUserManage);
-    sidebarLayout->addWidget(m_navOrderManage);
+    sidebarLayout->addWidget(btnGear);
+    sidebarLayout->addWidget(btnUser);
+    sidebarLayout->addWidget(btnOrder);
     sidebarLayout->addStretch();
     
     // 右侧主内容区
@@ -248,12 +241,22 @@ QWidget* AdminMainWindow::createDashboardPage()
     statsLayout->addStretch();
     contentLayout->addLayout(statsLayout);
 
-    // 地图区域
-    auto *mapContainer = new QWidget(contentArea);
-    mapContainer->setMinimumHeight(500);
-    mapContainer->setStyleSheet("background-color: #ecf0f1; border: 2px solid #bdc3c7; border-radius: 8px;");
-    loadMapStations(mapContainer);
-    contentLayout->addWidget(mapContainer, 1);
+    // 站点概览表格（替代地图）
+    auto *tableTitle = new QLabel(tr("📍 站点雨具概览"), contentArea);
+    tableTitle->setStyleSheet("font-size:16px; font-weight:600; color: #2c3e50; margin-top: 10px;");
+    contentLayout->addWidget(tableTitle);
+    
+    m_stationTable = new QTableWidget(contentArea);
+    m_stationTable->setColumnCount(5);
+    m_stationTable->setHorizontalHeaderLabels({
+        tr("站点名称"), tr("总雨具数"), tr("可借数量"), tr("已借出"), tr("故障数")
+    });
+    m_stationTable->horizontalHeader()->setStretchLastSection(true);
+    m_stationTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
+    m_stationTable->setSelectionBehavior(QAbstractItemView::SelectRows);
+    m_stationTable->setEditTriggers(QAbstractItemView::NoEditTriggers);
+    m_stationTable->setStyleSheet("QTableWidget { background-color: white; border: 1px solid #bdc3c7; } QHeaderView::section { background-color: #34495e; color: white; padding: 8px; font-weight: 600; }");
+    contentLayout->addWidget(m_stationTable, 1);
 
     mainLayout->addWidget(sidebar);
     mainLayout->addWidget(contentArea, 1);
@@ -280,136 +283,6 @@ QString AdminMainWindow::getWeatherInfo() const
     return weather;
 }
 
-void AdminMainWindow::loadMapStations(QWidget *mapContainer)
-{
-    if (!mapContainer) return;
-    
-    // 清除旧的站点按钮和标签
-    QList<QWidget*> children = mapContainer->findChildren<QWidget*>(QString(), Qt::FindDirectChildrenOnly);
-    for (auto *child : children) {
-        child->deleteLater();
-    }
-    
-    if (!DatabaseManager::init()) {
-        qWarning() << "[Admin] 数据库连接失败，无法加载站点";
-        return;
-    }
-    
-    auto allStations = DatabaseManager::fetchAllStations();
-    
-    // 查询所有站点的库存信息
-    QMap<int, int> stationInventory;
-    for (const auto &station : allStations) {
-        auto gears = DatabaseManager::fetchGearsByStation(station.stationId);
-        int availableCount = 0;
-        for (const auto &gear : gears) {
-            if (gear.status == 1) {
-                availableCount++;
-            }
-        }
-        stationInventory[station.stationId] = availableCount;
-    }
-    
-    // 绘制站点（与客户端一致的布局）
-    for (const auto &station : allStations) {
-        int stationId = station.stationId;
-        QString name = station.name;
-        double posX = station.posX;  // 从数据库读取的坐标
-        double posY = station.posY;  // 从数据库读取的坐标
-        
-        // 创建站点按钮（与客户端一致，24x24大小）
-        auto *stationBtn = new QPushButton(mapContainer);
-        stationBtn->setFixedSize(24, 24);
-        stationBtn->setCursor(Qt::PointingHandCursor);
-        
-        // 根据库存数量设置颜色（与客户端一致）
-        int availableCount = stationInventory.value(stationId, 0);
-        QString color;
-        if (availableCount >= 5) {
-            color = "#2ecc71"; // 绿色 - 库存充足
-        } else if (availableCount >= 2) {
-            color = "#f1c40f"; // 黄色 - 库存紧张
-        } else {
-            color = "#e74c3c"; // 红色 - 库存不足
-        }
-        
-        stationBtn->setStyleSheet(QString(
-            "QPushButton {"
-            "  background-color: %1;"
-            "  border: 2px solid white;"
-            "  border-radius: 12px;"
-            "}"
-            "QPushButton:hover {"
-            "  background-color: %1;"
-            "  border: 3px solid #3498db;"
-            "  border-radius: 12px;"
-            "}"
-        ).arg(color));
-        
-        // 设置工具提示
-        stationBtn->setToolTip(QString("%1\n可借雨具：%2 把").arg(name).arg(availableCount));
-        
-        // 点击站点显示详细信息
-        connect(stationBtn, &QPushButton::clicked, this, [this, stationId]() {
-            onStationClicked(stationId);
-        });
-        
-        // 添加站点名称标签
-        auto *nameLabel = new QLabel(name, mapContainer);
-        nameLabel->setStyleSheet("font-size: 11px; font-weight: 600; color: #2c3e50; background-color: rgba(255, 255, 255, 200); padding: 2px 6px; border-radius: 3px;");
-        nameLabel->setAlignment(Qt::AlignCenter);
-        nameLabel->adjustSize();
-        
-        // 使用定时器延迟设置位置（确保mapContainer已经完成布局，与客户端一致）
-        QTimer::singleShot(100, this, [mapContainer, stationBtn, nameLabel, posX, posY]() {
-            int containerWidth = mapContainer->width();
-            int containerHeight = mapContainer->height();
-            
-            int x = static_cast<int>(containerWidth * posX) - 12; // 减去按钮半径（与客户端一致）
-            int y = static_cast<int>(containerHeight * posY) - 12;
-            
-            stationBtn->move(x, y);
-            nameLabel->move(x - nameLabel->width() / 2 + 12, y + 28); // 放在按钮下方
-        });
-    }
-    
-    qDebug() << "[Admin] 已从数据库加载" << allStations.size() << "个站点并绘制到地图";
-}
-
-void AdminMainWindow::onStationClicked(int stationId)
-{
-    auto gears = DatabaseManager::fetchGearsByStation(stationId);
-    auto stations = DatabaseManager::fetchAllStations();
-    QString stationName;
-    for (const auto &s : stations) {
-        if (s.stationId == stationId) {
-            stationName = s.name;
-            break;
-        }
-    }
-    
-    int totalCount = gears.size();
-    int availableCount = 0;
-    int borrowedCount = 0;
-    int brokenCount = 0;
-    
-    for (const auto &gear : gears) {
-        if (gear.status == 1) availableCount++;
-        else if (gear.status == 2) borrowedCount++;
-        else if (gear.status == 3) brokenCount++;
-    }
-    
-    QString msg = QString("<h3>%1 (站点ID: %2)</h3>"
-        "<p><b>总雨具数：</b>%3 把</p>"
-        "<p><b>可借：</b>%4 把</p>"
-        "<p><b>已借出：</b>%5 把</p>"
-        "<p><b>故障：</b>%6 把</p>")
-        .arg(stationName).arg(stationId).arg(totalCount)
-        .arg(availableCount).arg(borrowedCount).arg(brokenCount);
-    
-    QMessageBox::information(this, tr("站点详情"), msg);
-}
-
 void AdminMainWindow::refreshDashboardData()
 {
     if (!DatabaseManager::init()) return;
@@ -419,8 +292,19 @@ void AdminMainWindow::refreshDashboardData()
         m_weatherLabel->setText(getWeatherInfo());
     }
     
-    // 计算设备在线率
+    // 获取所有雨具（包括已借出的）
+    auto allGears = DatabaseManager::fetchAllGears();
     auto stations = DatabaseManager::fetchAllStations();
+    
+    // 统计总数据
+    int totalBorrowed = 0;
+    int totalFault = 0;
+    for (const auto &gear : allGears) {
+        if (gear.status == 2) totalBorrowed++;
+        else if (gear.status == 3) totalFault++;
+    }
+    
+    // 计算设备在线率
     int onlineCount = 0;
     for (const auto &s : stations) {
         if (s.status == 1) onlineCount++;
@@ -430,28 +314,52 @@ void AdminMainWindow::refreshDashboardData()
         m_onlineDevicesLabel->setText(tr("设备在线: %1%").arg(QString::number(onlineRate, 'f', 0)));
     }
     
-    // 计算借出雨具数
-    int borrowedCount = 0;
-    for (const auto &s : stations) {
-        auto gears = DatabaseManager::fetchGearsByStation(s.stationId);
-        for (const auto &gear : gears) {
-            if (gear.status == 2) borrowedCount++;
-        }
-    }
     if (m_borrowedGearsLabel) {
-        m_borrowedGearsLabel->setText(tr("雨具借出: %1把").arg(borrowedCount));
+        m_borrowedGearsLabel->setText(tr("雨具借出: %1把").arg(totalBorrowed));
     }
     
-    // 计算故障数
-    int faultCount = 0;
-    for (const auto &s : stations) {
-        auto gears = DatabaseManager::fetchGearsByStation(s.stationId);
-        for (const auto &gear : gears) {
-            if (gear.status == 3) faultCount++;
-        }
-    }
     if (m_faultCountLabel) {
-        m_faultCountLabel->setText(tr("待处理故障: %1").arg(faultCount));
+        m_faultCountLabel->setText(tr("待处理故障: %1").arg(totalFault));
+    }
+    
+    // 刷新站点表格
+    if (m_stationTable) {
+        m_stationTable->setRowCount(0);
+        
+        for (const auto &station : stations) {
+            // 根据gear_id前缀统计该站点的雨具（如G002_xxx属于站点2）
+            QString prefix = QString("G%1_").arg(station.stationId, 3, 10, QChar('0'));
+            int total = 0, available = 0, borrowed = 0, fault = 0;
+            
+            for (const auto &gear : allGears) {
+                if (gear.gearId.startsWith(prefix)) {
+                    total++;
+                    if (gear.status == 1) available++;
+                    else if (gear.status == 2) borrowed++;
+                    else if (gear.status == 3) fault++;
+                }
+            }
+            
+            int row = m_stationTable->rowCount();
+            m_stationTable->insertRow(row);
+            
+            m_stationTable->setItem(row, 0, new QTableWidgetItem(station.name));
+            m_stationTable->setItem(row, 1, new QTableWidgetItem(QString::number(total)));
+            
+            auto *availableItem = new QTableWidgetItem(QString::number(available));
+            availableItem->setForeground(QBrush(QColor("#2ecc71"))); // 绿色
+            m_stationTable->setItem(row, 2, availableItem);
+            
+            auto *borrowedItem = new QTableWidgetItem(QString::number(borrowed));
+            borrowedItem->setForeground(QBrush(QColor("#3498db"))); // 蓝色
+            m_stationTable->setItem(row, 3, borrowedItem);
+            
+            auto *faultItem = new QTableWidgetItem(QString::number(fault));
+            if (fault > 0) {
+                faultItem->setForeground(QBrush(QColor("#e74c3c"))); // 红色
+            }
+            m_stationTable->setItem(row, 4, faultItem);
+        }
     }
 }
 
@@ -523,34 +431,36 @@ QWidget* AdminMainWindow::createGearManagePage()
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
-    // 左侧导航栏（复用）
+    // 左侧导航栏
     auto *sidebar = new QWidget(page);
-    sidebar->setFixedWidth(200);
-    sidebar->setStyleSheet("QWidget { background-color: #34495e; }");
+    sidebar->setMinimumWidth(200);
+    sidebar->setMaximumWidth(200);
+    sidebar->setStyleSheet(
+        "QWidget { background-color: #34495e; }"
+        "QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; }"
+        "QPushButton:hover { background-color: #2c3e50; }"
+    );
     auto *sidebarLayout = new QVBoxLayout(sidebar);
     sidebarLayout->setContentsMargins(0, 0, 0, 0);
     sidebarLayout->setSpacing(0);
     
     auto *btnDashboard = new QPushButton(tr("📊 首页概览"), sidebar);
-    btnDashboard->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; } QPushButton:hover { background-color: #2c3e50; }");
     connect(btnDashboard, &QPushButton::clicked, this, [this] { switchPage(Page::Dashboard); });
     
-    m_navGearManage = new QPushButton(tr("☂️ 雨具管理"), sidebar);
-    m_navGearManage->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: #2c3e50; } QPushButton:hover { background-color: #2c3e50; }");
-    connect(m_navGearManage, &QPushButton::clicked, this, [this] { switchPage(Page::GearManage); });
+    auto *btnGear = new QPushButton(tr("☂️ 雨具管理"), sidebar);
+    btnGear->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: #2c3e50; }");
+    connect(btnGear, &QPushButton::clicked, this, [this] { switchPage(Page::GearManage); });
     
-    m_navUserManage = new QPushButton(tr("👤 用户管理"), sidebar);
-    m_navUserManage->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; } QPushButton:hover { background-color: #2c3e50; }");
-    connect(m_navUserManage, &QPushButton::clicked, this, [this] { switchPage(Page::UserManage); });
+    auto *btnUser = new QPushButton(tr("👤 用户管理"), sidebar);
+    connect(btnUser, &QPushButton::clicked, this, [this] { switchPage(Page::UserManage); });
     
-    m_navOrderManage = new QPushButton(tr("📋 订单/流水"), sidebar);
-    m_navOrderManage->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; } QPushButton:hover { background-color: #2c3e50; }");
-    connect(m_navOrderManage, &QPushButton::clicked, this, [this] { switchPage(Page::OrderManage); });
+    auto *btnOrder = new QPushButton(tr("📋 订单/流水"), sidebar);
+    connect(btnOrder, &QPushButton::clicked, this, [this] { switchPage(Page::OrderManage); });
     
     sidebarLayout->addWidget(btnDashboard);
-    sidebarLayout->addWidget(m_navGearManage);
-    sidebarLayout->addWidget(m_navUserManage);
-    sidebarLayout->addWidget(m_navOrderManage);
+    sidebarLayout->addWidget(btnGear);
+    sidebarLayout->addWidget(btnUser);
+    sidebarLayout->addWidget(btnOrder);
     sidebarLayout->addStretch();
 
     // 右侧内容区
@@ -625,17 +535,20 @@ void AdminMainWindow::refreshGearManageData()
     int selectedStationId = m_gearStationCombo ? m_gearStationCombo->currentData().toInt() : 0;
     int selectedSlotId = m_gearSlotCombo ? m_gearSlotCombo->currentData().toInt() : 0;
     
-    QVector<DatabaseManager::GearRecord> allGears;
+    // 查询所有雨具（包括已借出的）
+    QVector<DatabaseManager::GearRecord> allGears = DatabaseManager::fetchAllGears();
     
+    // 按站点筛选（如果选择了特定站点）
     if (selectedStationId > 0) {
-        allGears = DatabaseManager::fetchGearsByStation(selectedStationId);
-    } else {
-        // 查询所有站点的雨具
-        auto stations = DatabaseManager::fetchAllStations();
-        for (const auto &station : stations) {
-            auto gears = DatabaseManager::fetchGearsByStation(station.stationId);
-            allGears.append(gears);
+        QVector<DatabaseManager::GearRecord> filtered;
+        for (const auto &gear : allGears) {
+            // 检查gear_id前缀是否匹配站点（如G002_xxx属于站点2）
+            QString prefix = QString("G%1_").arg(selectedStationId, 3, 10, QChar('0'));
+            if (gear.gearId.startsWith(prefix)) {
+                filtered.append(gear);
+            }
         }
+        allGears = filtered;
     }
     
     auto stations = DatabaseManager::fetchAllStations();
@@ -656,10 +569,24 @@ void AdminMainWindow::refreshGearManageData()
         m_gearTable->setItem(row, 0, new QTableWidgetItem(gear.gearId));
         m_gearTable->setItem(row, 1, new QTableWidgetItem(
             gear.typeId >= 1 && gear.typeId <= 4 ? typeNames[gear.typeId] : tr("未知")));
-        m_gearTable->setItem(row, 2, new QTableWidgetItem(
-            stationNames.value(gear.stationId, tr("未知"))));
-        m_gearTable->setItem(row, 3, new QTableWidgetItem(
-            gear.slotId > 0 ? QStringLiteral("#%1").arg(gear.slotId) : tr("无")));
+        
+        // 站点显示：已借出的雨具显示"已借出"
+        QString stationDisplay;
+        if (gear.status == 2) {
+            stationDisplay = tr("已借出");
+        } else {
+            stationDisplay = stationNames.value(gear.stationId, tr("未知"));
+        }
+        m_gearTable->setItem(row, 2, new QTableWidgetItem(stationDisplay));
+        
+        // 槽位显示：已借出的雨具显示"-"
+        QString slotDisplay;
+        if (gear.status == 2) {
+            slotDisplay = tr("-");
+        } else {
+            slotDisplay = gear.slotId > 0 ? QStringLiteral("#%1").arg(gear.slotId) : tr("无");
+        }
+        m_gearTable->setItem(row, 3, new QTableWidgetItem(slotDisplay));
         
         auto *statusItem = new QTableWidgetItem(
             gear.status >= 1 && gear.status <= 3 ? statusNames[gear.status] : tr("未知"));
@@ -723,34 +650,36 @@ QWidget* AdminMainWindow::createUserManagePage()
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
-    // 左侧导航栏（复用）
+    // 左侧导航栏
     auto *sidebar = new QWidget(page);
-    sidebar->setFixedWidth(200);
-    sidebar->setStyleSheet("QWidget { background-color: #34495e; }");
+    sidebar->setMinimumWidth(200);
+    sidebar->setMaximumWidth(200);
+    sidebar->setStyleSheet(
+        "QWidget { background-color: #34495e; }"
+        "QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; }"
+        "QPushButton:hover { background-color: #2c3e50; }"
+    );
     auto *sidebarLayout = new QVBoxLayout(sidebar);
     sidebarLayout->setContentsMargins(0, 0, 0, 0);
     sidebarLayout->setSpacing(0);
     
     auto *btnDashboard = new QPushButton(tr("📊 首页概览"), sidebar);
-    btnDashboard->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; } QPushButton:hover { background-color: #2c3e50; }");
     connect(btnDashboard, &QPushButton::clicked, this, [this] { switchPage(Page::Dashboard); });
     
-    m_navGearManage = new QPushButton(tr("☂️ 雨具管理"), sidebar);
-    m_navGearManage->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; } QPushButton:hover { background-color: #2c3e50; }");
-    connect(m_navGearManage, &QPushButton::clicked, this, [this] { switchPage(Page::GearManage); });
+    auto *btnGear = new QPushButton(tr("☂️ 雨具管理"), sidebar);
+    connect(btnGear, &QPushButton::clicked, this, [this] { switchPage(Page::GearManage); });
     
-    m_navUserManage = new QPushButton(tr("👤 用户管理"), sidebar);
-    m_navUserManage->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: #2c3e50; } QPushButton:hover { background-color: #2c3e50; }");
-    connect(m_navUserManage, &QPushButton::clicked, this, [this] { switchPage(Page::UserManage); });
+    auto *btnUser = new QPushButton(tr("👤 用户管理"), sidebar);
+    btnUser->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: #2c3e50; }");
+    connect(btnUser, &QPushButton::clicked, this, [this] { switchPage(Page::UserManage); });
     
-    m_navOrderManage = new QPushButton(tr("📋 订单/流水"), sidebar);
-    m_navOrderManage->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; } QPushButton:hover { background-color: #2c3e50; }");
-    connect(m_navOrderManage, &QPushButton::clicked, this, [this] { switchPage(Page::OrderManage); });
+    auto *btnOrder = new QPushButton(tr("📋 订单/流水"), sidebar);
+    connect(btnOrder, &QPushButton::clicked, this, [this] { switchPage(Page::OrderManage); });
     
     sidebarLayout->addWidget(btnDashboard);
-    sidebarLayout->addWidget(m_navGearManage);
-    sidebarLayout->addWidget(m_navUserManage);
-    sidebarLayout->addWidget(m_navOrderManage);
+    sidebarLayout->addWidget(btnGear);
+    sidebarLayout->addWidget(btnUser);
+    sidebarLayout->addWidget(btnOrder);
     sidebarLayout->addStretch();
 
     // 右侧内容区
@@ -876,34 +805,36 @@ QWidget* AdminMainWindow::createOrderManagePage()
     mainLayout->setContentsMargins(0, 0, 0, 0);
     mainLayout->setSpacing(0);
 
-    // 左侧导航栏（复用）
+    // 左侧导航栏
     auto *sidebar = new QWidget(page);
-    sidebar->setFixedWidth(200);
-    sidebar->setStyleSheet("QWidget { background-color: #34495e; }");
+    sidebar->setMinimumWidth(200);
+    sidebar->setMaximumWidth(200);
+    sidebar->setStyleSheet(
+        "QWidget { background-color: #34495e; }"
+        "QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; }"
+        "QPushButton:hover { background-color: #2c3e50; }"
+    );
     auto *sidebarLayout = new QVBoxLayout(sidebar);
     sidebarLayout->setContentsMargins(0, 0, 0, 0);
     sidebarLayout->setSpacing(0);
     
     auto *btnDashboard = new QPushButton(tr("📊 首页概览"), sidebar);
-    btnDashboard->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; } QPushButton:hover { background-color: #2c3e50; }");
     connect(btnDashboard, &QPushButton::clicked, this, [this] { switchPage(Page::Dashboard); });
     
-    m_navGearManage = new QPushButton(tr("☂️ 雨具管理"), sidebar);
-    m_navGearManage->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; } QPushButton:hover { background-color: #2c3e50; }");
-    connect(m_navGearManage, &QPushButton::clicked, this, [this] { switchPage(Page::GearManage); });
+    auto *btnGear = new QPushButton(tr("☂️ 雨具管理"), sidebar);
+    connect(btnGear, &QPushButton::clicked, this, [this] { switchPage(Page::GearManage); });
     
-    m_navUserManage = new QPushButton(tr("👤 用户管理"), sidebar);
-    m_navUserManage->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: transparent; } QPushButton:hover { background-color: #2c3e50; }");
-    connect(m_navUserManage, &QPushButton::clicked, this, [this] { switchPage(Page::UserManage); });
+    auto *btnUser = new QPushButton(tr("👤 用户管理"), sidebar);
+    connect(btnUser, &QPushButton::clicked, this, [this] { switchPage(Page::UserManage); });
     
-    m_navOrderManage = new QPushButton(tr("📋 订单/流水"), sidebar);
-    m_navOrderManage->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: #2c3e50; } QPushButton:hover { background-color: #2c3e50; }");
-    connect(m_navOrderManage, &QPushButton::clicked, this, [this] { switchPage(Page::OrderManage); });
+    auto *btnOrder = new QPushButton(tr("📋 订单/流水"), sidebar);
+    btnOrder->setStyleSheet("QPushButton { text-align: left; padding: 15px 20px; font-size: 14px; color: white; border: none; background-color: #2c3e50; }");
+    connect(btnOrder, &QPushButton::clicked, this, [this] { switchPage(Page::OrderManage); });
     
     sidebarLayout->addWidget(btnDashboard);
-    sidebarLayout->addWidget(m_navGearManage);
-    sidebarLayout->addWidget(m_navUserManage);
-    sidebarLayout->addWidget(m_navOrderManage);
+    sidebarLayout->addWidget(btnGear);
+    sidebarLayout->addWidget(btnUser);
+    sidebarLayout->addWidget(btnOrder);
     sidebarLayout->addStretch();
 
     // 右侧内容区
