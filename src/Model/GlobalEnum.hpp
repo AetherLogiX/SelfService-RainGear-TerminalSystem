@@ -14,8 +14,17 @@ enum class GearType {
     Raincoat = 4            // 雨衣
 };
 
+//雨具状态枚举
+enum class GearStatus{
+    Unknown = 0,
+    Available = 1,  //可用
+    Borrowed = 2,  //借出
+    Broken = 3,  //损坏
+};
+
 //站点枚举,使用英文避免乱码
 enum class Station{
+    Unknown = 0,
     Wende,      // 文德楼
     Mingde,     // 明德楼
     Library,    // 图书馆

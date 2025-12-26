@@ -1,5 +1,5 @@
 /*
-定义了用户类User，用于管理用户信息和借还雨具的操作。
+定义了用户类User
 */
 #pragma once
 
@@ -18,6 +18,12 @@ public:
     int get_role() const;
     double get_credit() const;
     bool get_is_active() const;
+    
+    //setters
+    void set_credit(double credit);
+    void set_is_active(bool is_active);
+    void set_password(QString&& password);
+
 private:
     QString id;
     QString name;
