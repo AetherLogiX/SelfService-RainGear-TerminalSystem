@@ -1,25 +1,15 @@
-
-#include <QList>
-#include <QString>
-#include <memory>
-
-#include "GlobalEnum.hpp"
-#include "RainGear.hpp"
-#include "RainGearFactory.h"
-#include "RainGear_subclasses.hpp"
-#include "StationUtils.h"
 #include "Stationlocal.h"
+#include<QDebug>
 
 Stationlocal::Stationlocal(Station station, double posX, double posY):station(station),posX(posX),posY(posY){
-    inventory.resize(N+1);  // 调整大小为N+1，索引0不使用，索引1-12对应slot_id
+    inventory.resize(Station_capacity+1);  // 调整大小为Station_capacity+1，索引0不使用，索引1-12对应slot_id
 }
 
 
-//判断雨具是否损坏，是否可用
-//index范围：1-12（与数据库slot_id一致）
+//判断某个槽位的雨具是否可用
 bool Stationlocal::is_gear_available(int index) const{
-    if(index<1 || index>N) return false; //索引范围1-12
-    if(!inventory[index] || inventory[index]->is_broken()) return false;  
+    if(index<1 || index>Station_capacity) return false;
+    if(!inventory[index] || inventory[index]->is_broken() ||unavailable_gears.contains(index)) return false;  
     return true;
 }
 
@@ -27,7 +17,7 @@ bool Stationlocal::is_gear_available(int index) const{
 //库存总数量与可用数量
 int Stationlocal::get_inventory_count() const{
     int count = 0;
-    for(int i=1;i<=N;++i){
+    for(int i=1;i<=Station_capacity;++i){
         if(inventory[i]) count++;
     }
     return count; 
@@ -35,32 +25,34 @@ int Stationlocal::get_inventory_count() const{
 
 int Stationlocal::get_available_count() const{
     int count = 0;
-    for(int i=1;i<=N;++i){
-        if(inventory[i] && !inventory[i]->is_broken()) count++;
+    for(int i=1;i<=Station_capacity;++i){
+        if(is_gear_available(i)) count++;
     }
     return count;
 }
 
-//服务器管理员权限
+//管理员权限
 void Stationlocal::add_gear(int index, std::unique_ptr<RainGear> gear){
-    if(index<1||index>N||!gear) return; 
+    if(index<1||index>Station_capacity||!gear) return; 
+    if(gear->is_broken()) unavailable_gears.insert(index);
     inventory[index] = std::move(gear);
-} //添加雨具到库存
+} //添加雨具到库存,dao读取数据库后会调用这个函数把伞放进站点
 
 std::unique_ptr<RainGear> Stationlocal::take_gear(int index){
-    if(index<1 || index>N || !inventory[index]) return nullptr; 
+    if(index<1 || index>Station_capacity || !inventory[index]) return nullptr; 
+    unavailable_gears.remove(index); //移出不可用槽位名单
     return std::move(inventory[index]);
 } //从库存中取出雨具
 
 void Stationlocal::mark_unavailable(int index){
-    if(index<1 || index>N || !inventory[index]) return; 
-    inventory[index]->set_broken(true);
+    if(index<1 || index>Station_capacity || !inventory[index]) return; 
+    if(inventory[index]) inventory[index]->set_broken(true); //把雨具的状态也设置成broken
     unavailable_gears.insert(index);
 }//标记雨具不可用
 
 void Stationlocal::mark_available(int index){
-    if(index<1 || index>N || !inventory[index]) return; 
-    inventory[index]->set_broken(false);
+    if(index<1 || index>Station_capacity || !inventory[index]) return; 
+    if(inventory[index]) inventory[index]->set_broken(false);
     unavailable_gears.remove(index);
 } //标记雨具可用
 
