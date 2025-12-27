@@ -5,7 +5,7 @@
 #include<memory>
 
 #include"../dao/RecordDao.h"
-#include"../dao/GearDao.h
+#include"../dao/GearDao.h"
 #include"../dao/UserDao.h"
 #include"../model/GlobalEnum.hpp"
 

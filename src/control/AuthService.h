@@ -13,7 +13,7 @@ public:
     //定义登录检查的结果状态，给UI层做判断
     enum class LoginStatus{
         SuccessNormal, //非首次login in，UI跳转输密码
-        SuccessFiratTime, //首次login in，UI跳转设置新密码
+        SuccessFirstTime, //首次login in，UI跳转设置新密码
         UserNotFound, //学号不存在
         NameMismatch, //姓名不匹配
         DatabaseError, //数据库连接失败
