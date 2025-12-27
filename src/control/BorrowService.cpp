@@ -100,10 +100,16 @@ ServiceResult BorrowService::returnGear(const QString& userId, const QString& ge
     if (!gear) return {false,"雨具信息异常"};
     QDateTime borrowTime = recordBox->get_borrow_time();
     QDateTime returnTime = QDateTime::currentDateTime(); 
-    //租金
+    
+    //计算租金
     double cost = calculateCost(borrowTime, returnTime, gear->get_type());
-    //应退金额
-    double refund = gear->get_deposit() - cost;
+    double deposit = gear->get_deposit();
+    
+    //费用最多等于押金，不会倒扣用户余额
+    if (cost > deposit) { cost = deposit;}
+    
+    //应退金额 = 押金 - 费用（最低为0）
+    double refund = deposit - cost;
     
     if (!db.transaction()) return {false, "系统忙"};
     bool success = true;
@@ -116,7 +122,7 @@ ServiceResult BorrowService::returnGear(const QString& userId, const QString& ge
 
     if (success) {
         db.commit();
-        QString msg = QString("还伞成功！产生费用 %.2f 元，退回 %.2f 元").arg(cost).arg(refund);
+        QString msg = QString("还伞成功！产生费用 %1 元，退回 %2 元").arg(cost, 0, 'f', 2).arg(refund, 0, 'f', 2);
         qInfo() << msg;
         return {true, msg, cost};
     } else {
