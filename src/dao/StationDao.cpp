@@ -1,3 +1,4 @@
+#include"StationDao.h"
 #include"GearDao.h"
 
 #include<QSqlQuery>
