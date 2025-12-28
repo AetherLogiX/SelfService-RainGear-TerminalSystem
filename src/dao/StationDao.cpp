@@ -103,3 +103,40 @@ std::unique_ptr<Stationlocal> StationDao::selectById(QSqlDatabase& db, Station s
 
     return nullptr;
 }
+
+//获取各站点的可用库存数量
+QMap<int, int> StationDao::selectStationInventoryCounts(QSqlDatabase& db) {
+    QMap<int, int> result;
+    
+    //查出所有站点ID，确保即使没有雨具的站点也会显示
+    QSqlQuery stationQuery(db);
+    stationQuery.prepare(QStringLiteral("SELECT station_id FROM station ORDER BY station_id"));
+    if (stationQuery.exec()) {
+        while (stationQuery.next()) {
+            int stationId = stationQuery.value(0).toInt();
+            result[stationId] = 0;  //初始化为0
+        }
+    }
+    
+    //使用聚合查询统计每个站点的可用雨具数量
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral(
+        "SELECT station_id, COUNT(*) as available_count "
+        "FROM raingear "
+        "WHERE station_id IS NOT NULL AND status = 1 "
+        "GROUP BY station_id"
+    ));
+    
+    if (!query.exec()) {
+        qCritical() << "查询站点库存失败:" << query.lastError().text();
+        return result;
+    }
+    
+    while (query.next()) {
+        int stationId = query.value("station_id").toInt();
+        int count = query.value("available_count").toInt();
+        result[stationId] = count;
+    }
+    
+    return result;
+}

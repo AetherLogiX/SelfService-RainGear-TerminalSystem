@@ -1,6 +1,7 @@
 #pragma once
 
 #include<QSqlDatabase>
+#include<QMap>
 #include<vector>
 #include<optional>
 #include<memory>
@@ -14,4 +15,6 @@ public:
     std::vector<std::unique_ptr<Stationlocal>> selectAll(QSqlDatabase& db); 
     //根据站点ID获取站点信息
     std::unique_ptr<Stationlocal> selectById(QSqlDatabase& db, Station station);
+    //获取各站点的可用库存数量（用于地图显示）
+    QMap<int, int> selectStationInventoryCounts(QSqlDatabase& db);
 };
