@@ -1,0 +1,11 @@
+<RCC>
+    <qresource prefix="/icons">
+        <file alias="plastic_unbrella.png">icons/plastic_unbrella.png</file>
+        <file alias="highquality_unbrella.png">icons/highquality_unbrella.png</file>
+        <file alias="sunshade_umbrella.png">icons/sunshade_umbrella.png</file>
+        <file alias="raincoat.png">icons/raincoat.png</file>
+    </qresource>
+    <qresource prefix="/map">
+        <file alias="map_config.json">map/map_config.json</file>
+    </qresource>
+</RCC>
