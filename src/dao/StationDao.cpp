@@ -194,3 +194,23 @@ double StationDao::getOnlineRate(QSqlDatabase& db) {
     }
     return 0.0;
 }
+
+//更新站点在线状态
+bool StationDao::updateStatus(QSqlDatabase& db, int stationId, bool isOnline) {
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral("UPDATE station SET status = ? WHERE station_id = ?"));
+    query.addBindValue(isOnline ? 1 : 0);
+    query.addBindValue(stationId);
+    
+    if (!query.exec()) {
+        qCritical() << "更新站点状态失败:" << query.lastError().text();
+        return false;
+    }
+    
+    if (query.numRowsAffected() == 0) {
+        qWarning() << "更新站点状态：未找到对应的站点ID" << stationId;
+        return false;
+    }
+    
+    return true;
+}

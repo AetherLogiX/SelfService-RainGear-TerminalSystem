@@ -17,3 +17,10 @@ double Admin_StationService::getOnlineRate() {
     if (!db.isOpen()) return 0.0;
     return stationDao.getOnlineRate(db);
 }
+
+//更新站点在线状态
+bool Admin_StationService::updateStationStatus(int stationId, bool isOnline) {
+    QSqlDatabase db = ConnectionPool::getThreadLocalConnection();
+    if (!db.isOpen()) return false;
+    return stationDao.updateStatus(db, stationId, isOnline);
+}

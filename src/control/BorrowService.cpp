@@ -1,5 +1,6 @@
 #include"BorrowService.h"
 #include"../utils/ConnectionPool.h"
+#include"../dao/StationDao.h"
 #include<QDebug>
 #include<QtMath>
 
@@ -16,6 +17,16 @@ ServiceResult BorrowService::borrowGear(const QString& userId, Station stationId
     //检查用户是否已经借伞
     auto unfinishedRecord = recordDao.selectUnfinishedByUserId(db, userId);
     if (unfinishedRecord.has_value()) { return {false, "您有未归还的订单，请先归还后再借"}; }
+    
+    //检查站点是否在线
+    StationDao stationDao;
+    auto station = stationDao.selectById(db, stationId);
+    if (!station) {
+        return {false, "站点信息异常，请稍后重试"};
+    }
+    if (!station->get_online()) {
+        return {false, "该站点当前离线，无法借伞，请选择其他站点"};
+    }
     
     //根据站点和槽位查找雨具
     auto gear = gearDao.selectByStationAndSlot(db, stationId, slotId);
@@ -78,8 +89,18 @@ ServiceResult BorrowService::returnGear(const QString& userId, const QString& ge
     auto gear = gearDao.selectById(db, gearId);
     if (!gear) return {false, "雨具信息异常(ID不存在)"};
 
-     //检查归还的槽位是否已经被占了
-     if (gearDao.isSlotOccupied(db, stationId, slotId)) { return {false, "该槽位已有雨具，请更换槽位"}; }
+    //检查站点是否在线
+    StationDao stationDao;
+    auto station = stationDao.selectById(db, stationId);
+    if (!station) {
+        return {false, "站点信息异常，请稍后重试"};
+    }
+    if (!station->get_online()) {
+        return {false, "该站点当前离线，无法还伞，请选择其他站点"};
+    }
+
+    //检查归还的槽位是否已经被占了
+    if (gearDao.isSlotOccupied(db, stationId, slotId)) { return {false, "该槽位已有雨具，请更换槽位"}; }
 
     bool isSlotValid = false;
     GearType type = gear->get_type();

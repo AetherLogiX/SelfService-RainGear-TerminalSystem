@@ -33,4 +33,5 @@ public:
     //管理员Part
     QVector<StationStatsDTO> selectAllWithStats(QSqlDatabase& db); //获取所有站点及其雨具统计
     double getOnlineRate(QSqlDatabase& db); //获取在线率
+    bool updateStatus(QSqlDatabase& db, int stationId, bool isOnline); //更新站点在线状态
 };

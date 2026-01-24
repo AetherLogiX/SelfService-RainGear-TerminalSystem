@@ -323,9 +323,9 @@ QWidget* AdminMainWindow::createDashboardPage()
     contentLayout->addWidget(tableTitle);
     
     m_stationTable = new QTableWidget(contentArea);
-    m_stationTable->setColumnCount(5);
+    m_stationTable->setColumnCount(7);
     m_stationTable->setHorizontalHeaderLabels({
-        tr("站点名称"), tr("总雨具数"), tr("可借数量"), tr("已借出"), tr("故障数")
+        tr("站点名称"), tr("在线状态"), tr("总雨具数"), tr("可借数量"), tr("已借出"), tr("故障数"), tr("操作")
     });
     m_stationTable->horizontalHeader()->setStretchLastSection(true);
     m_stationTable->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
@@ -664,22 +664,80 @@ void AdminMainWindow::refreshDashboardData()
             int row = m_stationTable->rowCount();
             m_stationTable->insertRow(row);
             
+            // 站点名称
             m_stationTable->setItem(row, 0, new QTableWidgetItem(stats.name));
-            m_stationTable->setItem(row, 1, new QTableWidgetItem(QString::number(stats.totalGears)));
             
+            // 在线状态
+            auto *statusItem = new QTableWidgetItem(stats.isOnline ? tr("🟢 在线") : tr("🔴 离线"));
+            statusItem->setForeground(QBrush(stats.isOnline ? QColor("#00d68f") : QColor("#ff3d71")));
+            m_stationTable->setItem(row, 1, statusItem);
+            
+            // 总雨具数
+            m_stationTable->setItem(row, 2, new QTableWidgetItem(QString::number(stats.totalGears)));
+            
+            // 可借数量
             auto *availableItem = new QTableWidgetItem(QString::number(stats.availableCount));
             availableItem->setForeground(QBrush(QColor("#00d68f")));
-            m_stationTable->setItem(row, 2, availableItem);
+            m_stationTable->setItem(row, 3, availableItem);
             
+            // 已借出
             auto *borrowedItem = new QTableWidgetItem(QString::number(stats.borrowedCount));
             borrowedItem->setForeground(QBrush(QColor("#667eea")));
-            m_stationTable->setItem(row, 3, borrowedItem);
+            m_stationTable->setItem(row, 4, borrowedItem);
             
+            // 故障数
             auto *brokenItem = new QTableWidgetItem(QString::number(stats.brokenCount));
-            if (stats.brokenCount > 0) {
-                brokenItem->setForeground(QBrush(QColor("#ff3d71")));
-            }
-            m_stationTable->setItem(row, 4, brokenItem);
+            brokenItem->setForeground(QBrush(QColor("#ff3d71")));
+            m_stationTable->setItem(row, 5, brokenItem);
+            
+            // 操作按钮（修改在线状态）
+            auto *btnModify = new QPushButton(stats.isOnline ? tr("设为离线") : tr("设为在线"));
+            btnModify->setStyleSheet(Styles::Buttons::secondary());
+            btnModify->setCursor(Qt::PointingHandCursor);
+            
+            connect(btnModify, &QPushButton::clicked, this, [this, stats = stats]() {
+                QDialog dialog(this);
+                dialog.setWindowTitle(tr("修改站点在线状态"));
+                dialog.setStyleSheet("QDialog { background-color: #ffffff; }");
+                auto *layout = new QVBoxLayout(&dialog);
+                layout->setSpacing(16);
+                layout->setContentsMargins(24, 24, 24, 24);
+                
+                auto *label = new QLabel(tr("站点: %1\n当前状态: %2")
+                    .arg(stats.name)
+                    .arg(stats.isOnline ? tr("🟢 在线") : tr("🔴 离线")));
+                label->setStyleSheet(Styles::Labels::info());
+                layout->addWidget(label);
+                
+                auto *combo = new QComboBox(&dialog);
+                combo->addItem(tr("🟢 在线"), true);
+                combo->addItem(tr("🔴 离线"), false);
+                combo->setCurrentIndex(stats.isOnline ? 0 : 1);
+                layout->addWidget(combo);
+                
+                auto *btnLayout = new QHBoxLayout();
+                auto *btnOk = new QPushButton(tr("确定"), &dialog);
+                btnOk->setStyleSheet(Styles::Buttons::primary());
+                auto *btnCancel = new QPushButton(tr("取消"), &dialog);
+                btnCancel->setStyleSheet(Styles::Buttons::back());
+                connect(btnOk, &QPushButton::clicked, &dialog, &QDialog::accept);
+                connect(btnCancel, &QPushButton::clicked, &dialog, &QDialog::reject);
+                btnLayout->addWidget(btnOk);
+                btnLayout->addWidget(btnCancel);
+                layout->addLayout(btnLayout);
+                
+                if (dialog.exec() == QDialog::Accepted) {
+                    bool newStatus = combo->currentData().toBool();
+                    if (m_stationService->updateStationStatus(stats.stationId, newStatus)) {
+                        QMessageBox::information(this, tr("成功"), tr("站点在线状态已更新"));
+                        refreshDashboardData();
+                    } else {
+                        QMessageBox::critical(this, tr("失败"), tr("更新失败，请重试"));
+                    }
+                }
+            });
+            
+            m_stationTable->setCellWidget(row, 6, btnModify);
         }
     }
 }
