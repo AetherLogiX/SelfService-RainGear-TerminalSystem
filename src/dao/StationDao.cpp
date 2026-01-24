@@ -175,6 +175,8 @@ QVector<StationStatsDTO> StationDao::selectAllWithStats(QSqlDatabase& db) {
                 else if (status == 2) stats.borrowedCount = count;
                 else if (status == 3) stats.brokenCount = count;
             }
+        } else {
+            qWarning() << "查询站点" << stats.stationId << "(" << stats.name << ")的雨具统计失败:" << gearQuery.lastError().text();
         }
         result.append(stats);
     }

@@ -36,18 +36,26 @@ std::optional<BorrowRecord> RecordDao::selectUnfinishedByUserId(QSqlDatabase& db
     return std::nullopt;
 }
 
-//更新还伞结账信息,这里传入record_id作为参数，如果用id来查找不全面，有可能同一个人同时借了两把伞
-bool RecordDao::updateReturnInfo(QSqlDatabase& db, qint64 recordId, double cost) {
+//更新还伞结账信息,这里传入record_id作为参数
+bool RecordDao::updateReturnInfo(QSqlDatabase& db, qint64 recordId, const QDateTime& returnTime, double cost) {
     QSqlQuery query(db);
-    //更新return_time为当前时间，写入费用
-    query.prepare(QStringLiteral("UPDATE record SET return_time = NOW(), cost = ? WHERE record_id = ?"));
+    //更新return_time为传入的时间，写入费用（确保与计费时使用的时间一致）
+    query.prepare(QStringLiteral("UPDATE record SET return_time = ?, cost = ? WHERE record_id = ?"));
+    query.addBindValue(returnTime);
     query.addBindValue(cost);
     query.addBindValue(recordId);
 
     if (!query.exec()) {
-        qCritical() << "更新还车记录失败:" << query.lastError().text();
+        qCritical() << "更新还伞记录失败:" << query.lastError().text();
         return false;
     }
+    
+    // 验证更新是否成功
+    if (query.numRowsAffected() == 0) {
+        qWarning() << "更新还伞记录：未找到对应的记录ID" << recordId;
+        return false;
+    }
+    
     return true;
 }
 

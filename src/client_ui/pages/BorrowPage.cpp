@@ -7,7 +7,6 @@
 #include "../../control/BorrowService.h"
 #include "../../control/StationService.h"
 #include "../../Model/RainGearFactory.h"
-#include "../../dao/GearDao.h"
 #include "../../dao/RecordDao.h"
 #include "../../utils/ConnectionPool.h"
 
@@ -199,41 +198,26 @@ void BorrowPage::onSlotClicked(int slotIndex)
 
 void BorrowPage::handleBorrow(int slotId)
 {
-    // 获取站点详情
+    // 获取站点详情（用于UI检查）
     auto station = m_stationService->getStationDetail(static_cast<Station>(m_currentStationId));
     if (!station) {
         QMessageBox::warning(this, tr("错误"), tr("无法获取站点信息"));
         return;
     }
     
-    // 检查槽位是否可借
+    // 检查槽位是否可借（UI层面的快速检查）
     if (!station->is_gear_available(slotId)) {
         QMessageBox::warning(this, tr("提示"), tr("该槽位没有可借的雨具"));
         return;
     }
     
-    // 获取槽位中的雨具 - 这里需要通过 DAO 获取雨具ID
-    // 简化处理：通过站点槽位查找雨具
-    auto db = ConnectionPool::getThreadLocalConnection();
-    GearDao gearDao;
-    auto gears = gearDao.selectByStation(db, static_cast<Station>(m_currentStationId));
-    
-    QString gearId;
-    for (size_t i = 0; i < gears.size(); ++i) {
-        const auto &gear = gears[i];
-        if (gear && gear->get_slot_id() == slotId && gear->get_status() == GearStatus::Available) {
-            gearId = gear->get_id();
-            break;
-        }
-    }
-    
-    if (gearId.isEmpty()) {
-        QMessageBox::warning(this, tr("提示"), tr("该槽位没有可借的雨具"));
-        return;
-    }
-    
-    // 调用借伞服务
-    auto result = m_borrowService->borrowGear(m_currentUser->get_id(), gearId);
+    // 直接调用借伞服务，传入站点ID和槽位ID
+    // Service层会负责查找雨具ID并执行借伞逻辑
+    auto result = m_borrowService->borrowGear(
+        m_currentUser->get_id(), 
+        static_cast<Station>(m_currentStationId), 
+        slotId
+    );
     
     if (result.success) {
         QMessageBox::information(this, tr("借伞成功"), result.message);

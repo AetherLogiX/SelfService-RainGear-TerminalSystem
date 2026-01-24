@@ -55,6 +55,33 @@ std::vector<std::unique_ptr<RainGear>> GearDao::selectByStation(QSqlDatabase& db
     return gears;
 }
 
+//根据站点和槽位查询雨具（用于借伞时查找）
+std::unique_ptr<RainGear> GearDao::selectByStationAndSlot(QSqlDatabase& db, Station station, int slotId) {
+    QSqlQuery query(db);
+    query.prepare(QStringLiteral("SELECT * FROM raingear WHERE station_id = ? AND slot_id = ? AND status = 1 LIMIT 1"));
+    query.addBindValue(static_cast<int>(station));
+    query.addBindValue(slotId);
+    
+    if (!query.exec()) {
+        qCritical() << "查询雨具失败:" << query.lastError().text();
+        return nullptr;
+    }
+    
+    if (query.next()) {
+        QString gearId = query.value("gear_id").toString();
+        GearType type = static_cast<GearType>(query.value("type_id").toInt());
+        
+        auto gear = RainGearFactory::create_raingear(type, gearId);
+        if (gear) {
+            gear->set_status(static_cast<GearStatus>(query.value("status").toInt()));
+            gear->set_station_id(static_cast<Station>(query.value("station_id").toInt()));
+            gear->set_slot_id(query.value("slot_id").toInt());
+            return gear;
+        }
+    }
+    return nullptr;
+}
+
 //check_slot_occupied
 bool GearDao::isSlotOccupied(QSqlDatabase& db, Station station, int slot_id){
     QSqlQuery query(db);

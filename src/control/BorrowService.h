@@ -18,8 +18,8 @@ struct ServiceResult{
 
 class BorrowService{
 public:
-    //借伞
-    ServiceResult borrowGear(const QString& userId, const QString& gearId);
+    //借伞（根据站点和槽位）
+    ServiceResult borrowGear(const QString& userId, Station stationId, int slotId);
     //还伞
     ServiceResult returnGear(const QString& userId, const QString& gearId, Station stationId, int slotId);
 private:

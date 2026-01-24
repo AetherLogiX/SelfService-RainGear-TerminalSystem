@@ -24,6 +24,7 @@ class GearDao{
 public:
     std::unique_ptr<RainGear> selectById(QSqlDatabase& db, const QString& id); //根据id查询雨具
     std::vector<std::unique_ptr<RainGear>> selectByStation(QSqlDatabase& db, Station station); //根据站点查询雨具
+    std::unique_ptr<RainGear> selectByStationAndSlot(QSqlDatabase& db, Station station, int slotId); //根据站点和槽位查询雨具
     
     bool isSlotOccupied(QSqlDatabase& db, Station station, int slot_id); //检查槽位是否被占用
     bool insert(QSqlDatabase& db, const QString& gearId, GearType type, Station stationId, int slotId); //插入雨具
