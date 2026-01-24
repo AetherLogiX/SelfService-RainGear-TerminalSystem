@@ -10,9 +10,10 @@ insert into users (user_id, password, real_name, role, credit, is_active) values
 ('202483290399', null, 'cqw', 0, 100.00, 0),
 ('202383290032', null, 'wy', 0, 50.00, 0),
 ('202483290447', null, 'ljy', 0, 30.00, 0),
-('202511420317', null, 'cka', 0, 100.00, 0),
+('202483290420', null, 'sz', 0, 100.00, 0),
 ('T001', null, 'teacher1', 1, 200.00, 0),
 ('T002', null, 'teacher2', 1, 200.00, 0),
+('T003', null, 'teacher3', 1, 200.00, 0),
 ('admin', '123456', 'admin', 9, 9999.00, 1)
 on duplicate key update user_id=user_id;
 
