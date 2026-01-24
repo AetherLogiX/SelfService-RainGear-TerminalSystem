@@ -34,7 +34,7 @@ ServiceResult BorrowService::borrowGear(const QString& userId, Station stationId
     
     QString gearId = gear->get_id();
     
-    //检查雨具状态（虽然查询时已经过滤了status=1，但这里再确认一次）
+    //检查雨具状态（虽然查询时已经过滤了status=1，这里再确认一次）
     if(gear->get_status()!= GearStatus::Available){ 
         return {false,"该雨具已被借出或处于维护中"}; 
     }

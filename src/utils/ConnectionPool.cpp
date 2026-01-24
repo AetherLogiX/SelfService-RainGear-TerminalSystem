@@ -4,42 +4,33 @@
 #include<QString>
 #include<QSqlError>
 #include<QThread>
-#include<QDateTime>
 
 #include "ConnectionPool.h"
 
 QSqlDatabase ConnectionPool::getThreadLocalConnection(){
+    // 根据线程ID生成唯一的连接名，不用改
     QString connectionName=QString("Conn_%1").arg((quint64)QThread::currentThreadId());
+    
     if(QSqlDatabase::contains(connectionName)){
         return QSqlDatabase::database(connectionName);
     }else{
         QSqlDatabase db=QSqlDatabase::addDatabase("QMYSQL",connectionName);
         db.setHostName("127.0.0.1");
         db.setPort(3306);
-        db.setDatabaseName("rainhub_db"); //数据库名
-        db.setUserName("root"); //用户名
-        db.setPassword("root"); //密码
+        db.setDatabaseName("rainhub_db"); 
+        db.setUserName("root"); 
+        db.setPassword("root"); 
+        
         if(!db.open()){
             qCritical()<<"Failed to connect to database: "<<db.lastError().text();
         }else{
             qInfo()<<"Connected to database: "<<db.databaseName();
-            // 设置数据库连接时区为本地时区，确保时间存储和读取时不做时区转换
-            // 添加的数据库连接时区只是设置作为额外保障，业务逻辑中代码已改为字符串读取已经避免了时间读取上的时区问题
+            
             QSqlQuery timezoneQuery(db);
-            // 获取系统时区偏移（小时）
-            QDateTime localTime = QDateTime::currentDateTime();
-            QDateTime utcTime = localTime.toUTC();
-            int offsetSeconds = localTime.secsTo(utcTime);
-            int offsetHours = offsetSeconds / 3600;
-            QString timezoneStr = QString("+%1:00").arg(offsetHours, 2, 10, QChar('0'));
-            if (offsetHours < 0) {
-                timezoneStr = QString("%1:00").arg(offsetHours, 2, 10, QChar('0'));
-            }
-            // 设置 MySQL 会话时区
-            if (!timezoneQuery.exec(QString("SET time_zone = '%1'").arg(timezoneStr))) {
-                qWarning() << "设置数据库时区失败，可能影响时间计算:" << timezoneQuery.lastError().text();
+            if (!timezoneQuery.exec("SET time_zone = '+8:00'")) {
+                 qWarning() << "设置时区失败:" << timezoneQuery.lastError().text();
             } else {
-                qInfo() << "数据库时区已设置为:" << timezoneStr;
+                 qInfo() << "数据库时区已强制设置为: +8:00";
             }
         }
         return db;

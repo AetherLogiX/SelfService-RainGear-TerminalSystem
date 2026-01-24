@@ -4,13 +4,18 @@
 #include <QSqlError>
 #include <QDebug>
 #include <QVariant>
+#include <QTimeZone> 
+
+/*
+为了保证借还逻辑的一致性，在应用层统一了时间标准，强制使用系统时区进行解析，避免了数据库驱动层的自动转换干扰。
+*/
 
 //add借出记录
 bool RecordDao::addBorrowRecord(QSqlDatabase& db, const QString& userId, const QString& gearId) {
     QSqlQuery query(db);
-    // 使用系统时间，格式化为字符串存储，完全避免时区问题
+
     QDateTime borrowTime = QDateTime::currentDateTime();
-    QString borrowTimeStr = borrowTime.toString("yyyy-MM-dd hh:mm:ss");
+    QString borrowTimeStr = borrowTime.toString("yyyy-MM-dd hh:mm:ss"); //将得到的这个系统时间转换为字符串
     
     query.prepare(QStringLiteral("INSERT INTO record (user_id, gear_id, borrow_time, cost) VALUES (?, ?, STR_TO_DATE(?, '%Y-%m-%d %H:%i:%s'), 0.0)"));
     query.addBindValue(userId);
@@ -27,37 +32,43 @@ bool RecordDao::addBorrowRecord(QSqlDatabase& db, const QString& userId, const Q
 //根据ID查找借伞未归还的记录
 std::optional<BorrowRecord> RecordDao::selectUnfinishedByUserId(QSqlDatabase& db, const QString& userId) {
     QSqlQuery query(db);
-    //return_time IS NULL就是返回时间为空的就是未归还的
-    query.prepare(QStringLiteral("SELECT record_id, user_id, gear_id, borrow_time, return_time, cost FROM record WHERE user_id = ? AND return_time IS NULL LIMIT 1"));
+    query.prepare(QStringLiteral("SELECT record_id, user_id, gear_id, borrow_time, cost FROM record WHERE user_id = ? AND return_time IS NULL LIMIT 1"));
     query.addBindValue(userId);
 
     if (!query.exec()) {
         qCritical() << "查询未归还记录失败:" << query.lastError().text();
         return std::nullopt;
     }
+    
     if (query.next()) {
-        // 从数据库读取时间，使用字符串格式读取，完全避免时区问题
+        // 读取字符串
         QString borrowTimeStr = query.value("borrow_time").toString();
-        QDateTime borrowTime = QDateTime::fromString(borrowTimeStr, "yyyy-MM-dd hh:mm:ss");
+        QDateTime borrowTime;
+        // 先尝试用 ISO 格式解析 (应对带 T 和 Z 的情况)
+        QDateTime temp = QDateTime::fromString(borrowTimeStr, Qt::ISODate);
         
-        // 如果读取的时间无效，报错
+        if (temp.isValid()) {
+            borrowTime = QDateTime(temp.date(), temp.time(), QTimeZone::systemTimeZone());
+        } else {
+            borrowTime = QDateTime::fromString(borrowTimeStr, "yyyy-MM-dd hh:mm:ss");
+        }
+
         if (!borrowTime.isValid()) {
             qCritical() << "从数据库读取的借出时间无效！字符串:" << borrowTimeStr;
             return std::nullopt;
         }
-        
-        // 确保是本地时间（fromString 默认就是本地时间，但明确转换一下更安全）
-        borrowTime = borrowTime.toLocalTime();
-        
-        QDateTime returnTime;
-        QString returnTimeStr = query.value("return_time").toString();
-        if (!returnTimeStr.isEmpty()) {
-            returnTime = QDateTime::fromString(returnTimeStr, "yyyy-MM-dd hh:mm:ss");
-            if (returnTime.isValid()) {
-                returnTime = returnTime.toLocalTime();
-            }
-        }
-        return BorrowRecord(query.value("record_id").toLongLong(), query.value("user_id").toString(), query.value("gear_id").toString(), borrowTime, returnTime, query.value("cost").toDouble());
+
+        // return_time 直接给空值，因为 SQL 已经筛选了未归还的
+        QDateTime returnTime; 
+
+        return BorrowRecord(
+            query.value("record_id").toLongLong(), 
+            query.value("user_id").toString(), 
+            query.value("gear_id").toString(), 
+            borrowTime, 
+            returnTime, 
+            query.value("cost").toDouble()
+        );
     }
     return std::nullopt;
 }
