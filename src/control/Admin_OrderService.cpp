@@ -4,7 +4,7 @@
 #include "Admin_OrderService.h"
 #include "../utils/ConnectionPool.h"
 
-//获取最近订单
+// 获取最近订单
 QVector<OrderInfo> Admin_OrderService::getRecentOrders(int limit) {
     QSqlDatabase db = ConnectionPool::getThreadLocalConnection();
     if (!db.isOpen()) return {};

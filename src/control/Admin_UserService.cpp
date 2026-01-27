@@ -12,7 +12,7 @@ QVector<User> Admin_UserService::getAllUsers(const QString& searchText) {
     QVector<User> allUsers = userDao.selectAll(db);
     if (searchText.isEmpty()) { return allUsers;}
     
-    //按学号或姓名过滤搜索
+    // 按学号或姓名过滤搜索
     QVector<User> filtered;
     for (const auto& user : allUsers) {
         if (user.get_id().contains(searchText, Qt::CaseInsensitive) ||

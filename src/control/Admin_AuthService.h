@@ -11,7 +11,7 @@
 
 class Admin_AuthService {
 public:
-    //管理员登录验证
+    // 管理员登录验证
     std::optional<User> adminLogin(const QString& userId, const QString& password);
 private:
     UserDao userDao;

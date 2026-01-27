@@ -9,21 +9,21 @@
 #include"../dao/UserDao.h"
 #include"../model/GlobalEnum.hpp"
 
-//给前端反馈借伞结果的结构体
+// 给前端反馈借伞结果的结构体
 struct ServiceResult{
     bool success;
-    QString message; //提示信息
-    double cost=0.0; //费用
+    QString message; // 提示信息
+    double cost=0.0; // 费用
 };
 
 class BorrowService{
 public:
-    //借伞（根据站点和槽位）
+    // 借伞（根据站点和槽位）
     ServiceResult borrowGear(const QString& userId, Station stationId, int slotId);
-    //还伞
+    // 还伞
     ServiceResult returnGear(const QString& userId, const QString& gearId, Station stationId, int slotId);
 private:
-    //计算费用
+    // 计算费用
     double calculateCost(const QDateTime& borrowTime, const QDateTime& returnTime, GearType type);
     UserDao userDao;
     GearDao gearDao;
