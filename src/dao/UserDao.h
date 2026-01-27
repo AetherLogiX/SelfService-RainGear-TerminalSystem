@@ -11,15 +11,15 @@
 
 class UserDao{
 public:
-    //根据ID查询用户
+    // 根据ID查询用户
     std::optional<User> selectById(QSqlDatabase& db, const QString& id);
-    //根据ID和姓名查询用户
+    // 根据ID和姓名查询用户
     std::optional<User> selectByIdAndName(QSqlDatabase& db, const QString& id, const QString& name);
-    //更新密码，（1）进行新用户的激活，（2）负责老用户的密码更改
+    // 更新密码，（1）进行新用户的激活，（2）负责老用户的密码更改
     bool updatePassword(QSqlDatabase& db, const QString& id, const QString& name,const QString& newPassword);
-    //更新余额，正负数都ok
+    // 更新余额，正负数都ok
     bool updateBalance(QSqlDatabase& db, const QString& id,double amountchange);
-    //获取所有用户
+    // 获取所有用户
     QVector<User> selectAll(QSqlDatabase& db);
 };
 

@@ -7,7 +7,7 @@
 #include<QStringList>
 
 
-//select_all，查出所有站点包含的所有的雨具的完整信息
+// select_all，查出所有站点包含的所有的雨具的完整信息
 std::vector<std::unique_ptr<Stationlocal>> StationDao::selectAll(QSqlDatabase& db) {
     std::vector<std::unique_ptr<Stationlocal>> stationList;
     stationList.reserve(20);
@@ -19,10 +19,10 @@ std::vector<std::unique_ptr<Stationlocal>> StationDao::selectAll(QSqlDatabase& d
         return stationList;
     }
 
-    //用于查询某个站点的所有雨具的信息，将雨具信息传给Stationlocal类
+    // 用于查询某个站点的所有雨具的信息，将雨具信息传给Stationlocal类
     GearDao gearDao;
     while (query.next()) {
-        //从station表读基础数据信息
+        // 从station表读基础数据信息
         int idInt=query.value("station_id").toInt();
         Station sid=static_cast<Station>(idInt);
         double x=query.value("pos_x").toDouble();
@@ -30,21 +30,21 @@ std::vector<std::unique_ptr<Stationlocal>> StationDao::selectAll(QSqlDatabase& d
         bool isOnline=(query.value("status").toInt()==1);
         QString badSlotsStr =query.value("unavailable_slots").toString();
 
-        //创建Stationlocal对象
+        // 创建Stationlocal对象
         auto stationObj=std::make_unique<Stationlocal>(sid, x, y);
         stationObj->set_online(isOnline);
 
-        //解析故障槽位字符串，数据库中是以逗号分隔的字符串如"1,5"
+        // 解析故障槽位字符串，数据库中是以逗号分隔的字符串如"1,5"
         if (!badSlotsStr.isEmpty()) {
             QStringList slotList = badSlotsStr.split(',', Qt::SkipEmptyParts);
             for (const QString& s : slotList) {
                 int slotIndex = s.toInt();
-                //标记该槽位不可用
+                // 标记该槽位不可用
                 stationObj->mark_unavailable(slotIndex);
             }
         }
 
-        //调用GearDao查出该站点下的所有伞
+        // 调用GearDao查出该站点下的所有伞
         auto gears = gearDao.selectByStation(db, sid);
         for (size_t i = 0; i < gears.size(); ++i) {
             auto& gear = gears[i];
@@ -60,7 +60,7 @@ std::vector<std::unique_ptr<Stationlocal>> StationDao::selectAll(QSqlDatabase& d
     return stationList;
 }
 
-//select_by_id，查出单个站点包含的所有的雨具的完整信息
+// select_by_id，查出单个站点包含的所有的雨具的完整信息
 std::unique_ptr<Stationlocal> StationDao::selectById(QSqlDatabase& db, Station stationId) {
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT * FROM station WHERE station_id = ?"));
@@ -72,12 +72,12 @@ std::unique_ptr<Stationlocal> StationDao::selectById(QSqlDatabase& db, Station s
     }
 
     if (query.next()) {
-        //从station表读基础数据信息
+        // 从station表读基础数据信息
         double x = query.value("pos_x").toDouble();
         double y = query.value("pos_y").toDouble();
         bool isOnline = (query.value("status").toInt() == 1);
         QString badSlotsStr = query.value("unavailable_slots").toString();
-        //创建Stationlocal对象
+        // 创建Stationlocal对象
         auto stationObj = std::make_unique<Stationlocal>(stationId, x, y);
         stationObj->set_online(isOnline);
 
@@ -88,7 +88,7 @@ std::unique_ptr<Stationlocal> StationDao::selectById(QSqlDatabase& db, Station s
             }
         }
 
-        //填充雨具
+        // 填充雨具
         GearDao gearDao;
         auto gears = gearDao.selectByStation(db, stationId);
         for (size_t i = 0; i < gears.size(); ++i) {
@@ -104,7 +104,7 @@ std::unique_ptr<Stationlocal> StationDao::selectById(QSqlDatabase& db, Station s
     return nullptr;
 }
 
-//获取各站点的地图信息（库存数量和在线状态，用于地图显示）
+// 获取各站点的地图信息（库存数量和在线状态，用于地图显示）
 QMap<int, StationMapInfo> StationDao::selectStationMapInfo(QSqlDatabase& db) {
     QMap<int, StationMapInfo> result;
     
@@ -149,8 +149,8 @@ QMap<int, StationMapInfo> StationDao::selectStationMapInfo(QSqlDatabase& db) {
 
 
 
-//管理员后台Part
-//获取所有站点及其雨具统计
+// 管理员后台Part
+// 获取所有站点及其雨具统计
 QVector<StationStatsDTO> StationDao::selectAllWithStats(QSqlDatabase& db) {
     QVector<StationStatsDTO> result;
     
@@ -168,7 +168,7 @@ QVector<StationStatsDTO> StationDao::selectAllWithStats(QSqlDatabase& db) {
         stats.borrowedCount = 0;
         stats.brokenCount = 0;
         
-        //查询该站点的雨具统计
+        // 查询该站点的雨具统计
         QSqlQuery gearQuery(db);
         gearQuery.prepare(QStringLiteral("SELECT status, COUNT(*) as cnt FROM raingear WHERE station_id = ? GROUP BY status"));
         gearQuery.addBindValue(stats.stationId);
@@ -189,7 +189,7 @@ QVector<StationStatsDTO> StationDao::selectAllWithStats(QSqlDatabase& db) {
     return result;
 }
 
-//获取在线率
+// 获取在线率
 double StationDao::getOnlineRate(QSqlDatabase& db) {
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT COUNT(*) as total, SUM(CASE WHEN status = 1 THEN 1 ELSE 0 END) as online FROM station"));
@@ -201,7 +201,7 @@ double StationDao::getOnlineRate(QSqlDatabase& db) {
     return 0.0;
 }
 
-//更新站点在线状态
+// 更新站点在线状态
 bool StationDao::updateStatus(QSqlDatabase& db, int stationId, bool isOnline) {
     QSqlQuery query(db);
     query.prepare(QStringLiteral("UPDATE station SET status = ? WHERE station_id = ?"));

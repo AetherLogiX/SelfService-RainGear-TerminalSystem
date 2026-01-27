@@ -7,10 +7,10 @@
 #include <QTimeZone> 
 
 /*
-为了保证借还逻辑的一致性，在应用层统一了时间标准，强制使用系统时区进行解析，避免了数据库驱动层的自动转换干扰。
+  为了保证借还逻辑的一致性，在应用层统一了时间标准，强制使用系统时区进行解析，避免了数据库驱动层的自动转换干扰。
 */
 
-//add借出记录
+// add借出记录
 bool RecordDao::addBorrowRecord(QSqlDatabase& db, const QString& userId, const QString& gearId) {
     QSqlQuery query(db);
 
@@ -29,7 +29,7 @@ bool RecordDao::addBorrowRecord(QSqlDatabase& db, const QString& userId, const Q
     return true;
 }
 
-//根据ID查找借伞未归还的记录
+// 根据ID查找借伞未归还的记录
 std::optional<BorrowRecord> RecordDao::selectUnfinishedByUserId(QSqlDatabase& db, const QString& userId) {
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT record_id, user_id, gear_id, borrow_time, cost FROM record WHERE user_id = ? AND return_time IS NULL LIMIT 1"));
@@ -73,12 +73,12 @@ std::optional<BorrowRecord> RecordDao::selectUnfinishedByUserId(QSqlDatabase& db
     return std::nullopt;
 }
 
-//更新还伞结账信息,这里传入record_id作为参数
+// 更新还伞结账信息,这里传入record_id作为参数
 bool RecordDao::updateReturnInfo(QSqlDatabase& db, qint64 recordId, const QDateTime& returnTime, double cost) {
     QSqlQuery query(db);
     // 使用字符串格式存储，完全避免时区问题
     QString returnTimeStr = returnTime.toString("yyyy-MM-dd hh:mm:ss");
-    //更新return_time为传入的时间，写入费用（确保与计费时使用的时间一致）
+    // 更新return_time为传入的时间，写入费用（确保与计费时使用的时间一致）
     query.prepare(QStringLiteral("UPDATE record SET return_time = STR_TO_DATE(?, '%Y-%m-%d %H:%i:%s'), cost = ? WHERE record_id = ?"));
     query.addBindValue(returnTimeStr);
     query.addBindValue(cost);
@@ -100,8 +100,8 @@ bool RecordDao::updateReturnInfo(QSqlDatabase& db, qint64 recordId, const QDateT
 
 
 
-//管理员后台Part
-//获取最近订单
+// 管理员后台Part
+// 获取最近订单
 QVector<OrderInfoDTO> RecordDao::selectRecent(QSqlDatabase& db, int limit) {
     QVector<OrderInfoDTO> result;
     QSqlQuery query(db);

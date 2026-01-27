@@ -7,7 +7,7 @@
 #include<QVariant>
 #include<QStringList>
 
-//select_by_id
+// select_by_id
 std::unique_ptr<RainGear> GearDao::selectById(QSqlDatabase& db, const QString& id){
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT * FROM raingear WHERE gear_id = ?"));
@@ -30,7 +30,7 @@ std::unique_ptr<RainGear> GearDao::selectById(QSqlDatabase& db, const QString& i
     return nullptr;
 }
 
-//select_by_station
+// select_by_station
 std::vector<std::unique_ptr<RainGear>> GearDao::selectByStation(QSqlDatabase& db, Station station){
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT * FROM raingear WHERE station_id = ?"));
@@ -55,7 +55,7 @@ std::vector<std::unique_ptr<RainGear>> GearDao::selectByStation(QSqlDatabase& db
     return gears;
 }
 
-//根据站点和槽位查询雨具（用于借伞时查找）
+// 根据站点和槽位查询雨具（用于借伞时查找）
 std::unique_ptr<RainGear> GearDao::selectByStationAndSlot(QSqlDatabase& db, Station station, int slotId) {
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT * FROM raingear WHERE station_id = ? AND slot_id = ? AND status = 1 LIMIT 1"));
@@ -82,7 +82,7 @@ std::unique_ptr<RainGear> GearDao::selectByStationAndSlot(QSqlDatabase& db, Stat
     return nullptr;
 }
 
-//check_slot_occupied
+// check_slot_occupied
 bool GearDao::isSlotOccupied(QSqlDatabase& db, Station station, int slot_id){
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT count(*) FROM raingear WHERE station_id = ? AND slot_id = ?"));
@@ -96,7 +96,7 @@ bool GearDao::isSlotOccupied(QSqlDatabase& db, Station station, int slot_id){
     return false;
 }
 
-//insert
+// insert
 bool GearDao::insert(QSqlDatabase& db, const QString& gearId, GearType type, Station stationId, int slotId){
     QSqlQuery query(db);
     query.prepare(QStringLiteral("INSERT INTO raingear (gear_id, type_id, station_id, slot_id, status) VALUES (?, ?, ?, ?, 1)"));
@@ -107,7 +107,7 @@ bool GearDao::insert(QSqlDatabase& db, const QString& gearId, GearType type, Sta
     return query.exec();
 }
 
-//delete_by_id
+// delete_by_id
 bool GearDao::deleteById(QSqlDatabase& db, const QString& id){
     QSqlQuery query(db);
     query.prepare(QStringLiteral("DELETE FROM raingear WHERE gear_id = ?"));
@@ -115,8 +115,8 @@ bool GearDao::deleteById(QSqlDatabase& db, const QString& id){
     return query.exec();
 }
 
-//update_status_and_location
-//当station=Station::Unknown 时，station_id 设为 NULL（表示雨具被借走，不在任何站点）
+// update_status_and_location
+// 当station=Station::Unknown 时，station_id 设为 NULL（表示雨具被借走，不在任何站点）
 bool GearDao::updateStatusAndLocation(QSqlDatabase& db, const QString& id, GearStatus status, Station station, int slot_id){
     QSqlQuery query(db);
     
@@ -141,7 +141,7 @@ bool GearDao::updateStatusAndLocation(QSqlDatabase& db, const QString& id, GearS
     return true;
 }
 
-//仅更新状态
+// 仅更新状态
 bool GearDao::updateStatus(QSqlDatabase& db, const QString& id, int status) {
     QSqlQuery query(db);
     query.prepare(QStringLiteral("UPDATE raingear SET status = ? WHERE gear_id = ?"));
@@ -152,8 +152,8 @@ bool GearDao::updateStatus(QSqlDatabase& db, const QString& id, int status) {
 
 
 
-//管理员后台Part
-//获取雨具DTO列表（支持分页）
+// 管理员后台Part
+// 获取雨具DTO列表（支持分页）
 QVector<GearInfoDTO> GearDao::selectAllDTO(QSqlDatabase& db, int stationId, int slotId, int limit, int offset) {
     QVector<GearInfoDTO> result;
     QString sql = "SELECT gear_id, type_id, station_id, slot_id, status FROM raingear";
@@ -198,7 +198,7 @@ QVector<GearInfoDTO> GearDao::selectAllDTO(QSqlDatabase& db, int stationId, int 
     return result;
 }
 
-//统计雨具总数（用于分页计算）
+// 统计雨具总数（用于分页计算）
 int GearDao::countGears(QSqlDatabase& db, int stationId, int slotId) {
     QString sql = "SELECT COUNT(*) FROM raingear";
     QStringList conditions;
@@ -217,7 +217,7 @@ int GearDao::countGears(QSqlDatabase& db, int stationId, int slotId) {
     return 0;
 }
 
-//按状态统计数量
+// 按状态统计数量
 int GearDao::countByStatus(QSqlDatabase& db, int status) {
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT COUNT(*) FROM raingear WHERE status = ?"));

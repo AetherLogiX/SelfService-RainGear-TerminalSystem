@@ -5,7 +5,7 @@
 #include<QDebug>
 #include<QVariant>
 
-//select_by_id
+// select_by_id
 std::optional<User> UserDao::selectById(QSqlDatabase& db, const QString& id){
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT user_id, real_name, password, role, credit, is_active "
@@ -26,7 +26,7 @@ std::optional<User> UserDao::selectById(QSqlDatabase& db, const QString& id){
     return std::nullopt;
 }
 
-//select_by_id_and_name
+// select_by_id_and_name
 std::optional<User> UserDao::selectByIdAndName(QSqlDatabase& db, const QString& id, const QString& name){
     QSqlQuery query(db);
     query.prepare(QStringLiteral("SELECT user_id, real_name, password, role, credit, is_active "
@@ -48,7 +48,7 @@ std::optional<User> UserDao::selectByIdAndName(QSqlDatabase& db, const QString& 
     return std::nullopt;
 }
 
-//update_password
+// update_password
 bool UserDao::updatePassword(QSqlDatabase& db, const QString& id, const QString& name,const QString& newPassword){
     QSqlQuery query(db);
     query.prepare(QStringLiteral("UPDATE users SET password = :newpwd, is_active = 1 WHERE user_id = :uid AND real_name = :name"));
@@ -62,7 +62,7 @@ bool UserDao::updatePassword(QSqlDatabase& db, const QString& id, const QString&
     return true;
 }
 
-//update_balance
+// update_balance
 bool UserDao::updateBalance(QSqlDatabase& db, const QString& id,double amountchange){
     QSqlQuery query(db);
     query.prepare(QStringLiteral("UPDATE users SET credit = credit + :amount WHERE user_id = :uid"));
@@ -75,7 +75,7 @@ bool UserDao::updateBalance(QSqlDatabase& db, const QString& id,double amountcha
     return true;
 }
 
-//select_all
+// select_all
 QVector<User> UserDao::selectAll(QSqlDatabase& db){
     QVector<User> users;
     QSqlQuery query(db);
